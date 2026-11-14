@@ -147,3 +147,23 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# --- MarsPath / Luna-9 additions ---
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Raw data: can be several GB, never commit
+data-pipeline/raw/
+*.tif
+*.tiff
+*.img
+*.IMG
+*.aux.xml
+
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
