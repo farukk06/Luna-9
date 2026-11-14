@@ -40,7 +40,7 @@ function ProfileTooltip({ row, rec, cmp }: { row: ProfileRow | undefined; rec: S
 
 function emptyText(hasTarget: boolean, computing: boolean, alternatives: Alternatives | null): string | null {
   if (!hasTarget) return 'Set a target to see the elevation profile.'
-  if (computing || !alternatives) return 'Computing routes...'
+  if (computing || !alternatives) return 'Computing routes…'
   if (alternatives.recommended === null) return 'No elevation profile: no route was found.'
   return null
 }

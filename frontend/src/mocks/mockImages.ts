@@ -1,10 +1,11 @@
 import type { Grid } from '../routing/types';
-import { slopeColor, type Rgb } from '../map/colorScale';
+import type { Rgb } from '../map/colorScale';
 import { pixelsToDataUrl } from '../map/rasterImages';
 
-// Temporary map images generated from a grid, used until Person 2's real
-// ortho.png / slope.png exist. Pixel (x, y) = cell (col, row), so the top
-// image row is grid row 0 (north up, CONTRACT Sections 1 and 4).
+// Mock base image (hillshade) generated from the grid, used until Person 2's
+// real ortho.png exists (slope and roughness: map/rasterImages.ts).
+// Pixel (x, y) = cell (col, row), so the top image row is grid row 0
+// (north up, CONTRACT Sections 1 and 4).
 
 function elevationAt(grid: Grid, col: number, row: number): number | null {
   if (col < 0 || col >= grid.width || row < 0 || row >= grid.height) return null;
@@ -59,22 +60,6 @@ export function hillshadePixels(grid: Grid): Uint8ClampedArray {
   return px;
 }
 
-/** RGBA pixels of the slope layer; cells above maxSlopeDeg get the impassable colour. */
-export function slopePixels(grid: Grid, maxSlopeDeg: number): Uint8ClampedArray {
-  const px = new Uint8ClampedArray(grid.width * grid.height * 4);
-  for (let i = 0; i < grid.width * grid.height; i++) {
-    const s = grid.slope[i];
-    if (s === grid.nodata) continue;
-    const [r, g, b] = slopeColor(s, maxSlopeDeg);
-    px.set([r, g, b, 255], i * 4);
-  }
-  return px;
-}
-
 export function renderHillshade(grid: Grid): string {
   return pixelsToDataUrl(hillshadePixels(grid), grid.width, grid.height);
-}
-
-export function renderSlope(grid: Grid, maxSlopeDeg: number): string {
-  return pixelsToDataUrl(slopePixels(grid, maxSlopeDeg), grid.width, grid.height);
 }
