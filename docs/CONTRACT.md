@@ -1,11 +1,13 @@
-# CONTRACT.md — MarsPath veri ve arayüz sözleşmesi (v2)
+# CONTRACT.md — MarsPath veri ve arayüz sözleşmesi (v3)
+
+> **v3 değişiklikleri (Kişi 2'nin önerisiyle):** `RouteResult.reason` içine `invalid-input` eklendi; geçersiz girdi artık `unreachable` dönmüyor (Bölüm 9). `meanSlopeDeg` mesafe ağırlıklı ortalama olarak tanımlandı (Bölüm 9). `pointOfNoReturnIndex` tanımlandı (Bölüm 9). Hiçbir alternatif rota bulunamazsa `recommended: null` (Bölüm 9). **v3 dondurulmuştur:** bundan sonra sadece bir şey gerçekten çalışmıyorsa, aşama sonunda değiştirilir.
 
 > **v2 değişiklikleri (Kişi 2'nin incelemesiyle):** çapraz geçişte köşe kesme yasağı (Bölüm 9), gidiş ve dönüş sürelerinin ayrı hesaplanması (Bölüm 9), harita sınırında indeks taşmasının önlenmesi (Bölüm 1), DEM–ortofoto hizalama doğrulaması (Bölüm 3a), mesafe ağırlığının sıfır olamaması (Bölüm 9), MEDA verisinin geçmiş ölçüm olarak gösterilmesi (Bölüm 7), NoData ve ızgara kenarı kuralları (Bölüm 3b), `roughnessP95 = 0` durumunda sıfıra bölme koruması (Bölüm 9).
 
 Bu dosya Kişi 1 (frontend, Claude Code) ile Kişi 2 (veri + rota, Codex) arasındaki ortak dildir.
 İki taraf da buradaki formatlara birebir uyar. Kişi 1 bu formatta **mock veri** ile, Kişi 2 **gerçek veri** ile çalışır; parçalar birleşince sorunsuz oturur.
 
-**Değişiklik kuralı:** Bu dosyada bir şey değişecekse önce grupta konuşulur, değişikliği sadece Kişi 1 yapar ve sürüm numarasını artırır (v2 → v3).
+**Değişiklik kuralı:** Bu dosyada bir şey değişecekse önce grupta konuşulur, değişikliği sadece Kişi 1 yapar ve sürüm numarasını artırır (v3 → v4).
 
 ---
 
@@ -236,11 +238,11 @@ export interface ProfilePoint { distanceM: number; elevationM: number; slopeDeg:
 
 export interface RouteResult {
   ok: boolean;
-  reason?: 'unreachable' | 'start-blocked' | 'goal-blocked' | 'out-of-bounds';
+  reason?: 'unreachable' | 'start-blocked' | 'goal-blocked' | 'out-of-bounds' | 'invalid-input';
   path: Cell[];             // başlangıç ve hedef dahil
   distanceM: number;
   maxSlopeDeg: number;
-  meanSlopeDeg: number;
+  meanSlopeDeg: number;      // mesafe ağırlıklı ortalama (Bölüm 9, Hesap kuralları)
   durationMin: number;        // gidiş süresi: başlangıç → hedef, Tobler × skafandr katsayısı
   returnDurationMin: number;  // dönüş süresi: aynı yol ters yönde (hedef → başlangıç), ayrı Tobler hesabı
   profile: ProfilePoint[];
@@ -250,7 +252,7 @@ export interface Alternatives {
   shortest: RouteResult;    // β = γ = 0
   safest: RouteResult;      // β ve γ yüksek
   balanced: RouteResult;    // kullanıcının ayarları
-  recommended: 'shortest' | 'safest' | 'balanced';
+  recommended: 'shortest' | 'safest' | 'balanced' | null;  // null: hiçbir rota bulunamadı
   reason: string;           // tek cümle, ör. "400 m daha uzun ama dik yamaçtan kaçınıyor"
 }
 
@@ -267,7 +269,7 @@ export interface EvaCheck {
   totalMin: number;
   limitMin: number;          // maxEvaMinutes × (1 − safetyMarginPct / 100)
   withinLimit: boolean;
-  pointOfNoReturnIndex?: number;  // path içindeki indeks; limit aşılıyorsa
+  pointOfNoReturnIndex?: number;  // sadece withinLimit = false iken; tanım Bölüm 9
 }
 ```
 
@@ -291,6 +293,32 @@ export { DEFAULT_OPTIONS, DEFAULT_EVA_PROFILE, SUIT_FACTOR, MIN_DISTANCE_WEIGHT 
 - Süre: her adımda Tobler hızı `W = 6 · e^(−3.5 · |tan θ + 0.05|)` km/sa (θ: adımın yön eğimi, yokuş yukarı pozitif) × `SUIT_FACTOR`.
 - **Gidiş ve dönüş ayrı hesaplanır:** Tobler yöne bağlıdır (aynı yamaç inişte hızlı, çıkışta yavaş). `durationMin` yol başlangıçtan hedefe izlenerek, `returnDurationMin` aynı yol ters sırayla (θ işareti ters) izlenerek hesaplanır. Dönüş için ayrıca A* çalıştırılmaz; astronot aynı yoldan döner.
 - Hedefe ulaşılamazsa hata fırlatılmaz; `ok: false` ve `reason` döner.
+- **`reason` değerlerinin anlamı:**
+
+| `reason` | Ne zaman | Arayüzde nasıl gösterilir (Kişi 1) |
+| --- | --- | --- |
+| `invalid-input` | Girdi geçersiz: ızgara Bölüm 3 formatına uymuyor, `start`/`goal` tam sayı değil, ağırlıklardan biri negatif veya sayı değil (`NaN`/`Infinity`), `maxSlopeDeg ≤ 0` veya sayı değil | Bir program/veri hatası olarak: "Route could not be computed (invalid input)". Arazi hakkında bir şey söylemez |
+| `out-of-bounds` | Girdi geçerli, ama `start` veya `goal` ızgaranın dışında | "Point is outside the study area" |
+| `start-blocked` | Başlangıç hücresi geçilemez (nodata veya `maxSlopeDeg` üstü) | "Habitat cell is not passable" |
+| `goal-blocked` | Hedef hücresi geçilemez | "Target cell is not passable" |
+| `unreachable` | Girdi geçerli, iki uç da geçilebilir ama aralarında `maxSlopeDeg` sınırına uyan bir yol yok | Arazi gerçeği olarak: "No safe route within the slope limit" |
+
+  Kontrol sırası: önce `invalid-input`, sonra `out-of-bounds`, sonra `start-blocked` / `goal-blocked`, en son arama (`unreachable`). `wDistance` değerinin `MIN_DISTANCE_WEIGHT`'ın altında olması `invalid-input` değildir; bu değere yükseltilir.
+- **`maxSlopeDeg` ve `meanSlopeDeg`:**
+  - `maxSlopeDeg` = yoldaki hücrelerin `slope` değerlerinin en büyüğü.
+  - `meanSlopeDeg` = **mesafe ağırlıklı ortalama**: her adımın (kenarın) eğimi, iki uç hücrenin `slope` ortalamasıdır; `meanSlopeDeg = Σ(kenar eğimi × kenar uzunluğu) / Σ(kenar uzunluğu)`. Çapraz adımlar (√2 × cellSize) düz adımlardan daha fazla ağırlık taşır.
+  - Yol tek hücreyse (`start = goal`): `distanceM = 0`, `maxSlopeDeg = meanSlopeDeg` = o hücrenin eğimi, süreler 0.
+- **Alternatif rotalar ve öneri (`findAlternatives`):**
+  - `recommended` **sadece `ok: true` olan** bir rotayı gösterebilir.
+  - Üç rotadan hiçbiri `ok: true` değilse `recommended: null` olur ve `reason`, `balanced` rotanın başarısızlık sebebini insan diliyle açıklar (ör. "No safe route within the slope limit").
+  - Arayüz (Kişi 1) `recommended === null` iken hiçbir rotayı "önerilen" diye göstermez, rota çizmez ve sadece bu açıklamayı gösterir.
+- **EVA kontrolü ve geri dönüş noktası (`checkEva`):**
+  - `limitMin = maxEvaMinutes × (1 − safetyMarginPct / 100)`; `totalMin = outboundMin + researchMin + returnMin`; `withinLimit = totalMin ≤ limitMin`.
+  - Yol üzerindeki her `i` indeksi için: `t_out(i)` = başlangıçtan `path[i]`'ye kadar gidiş süresi (Tobler, gidiş yönü); `t_back(i)` = `path[i]`'den başlangıca aynı yolu ters izleyerek dönüş süresi (Tobler, dönüş yönü). İkisi de `SUIT_FACTOR` dahil, dakika.
+  - **`pointOfNoReturnIndex`** = `t_out(i) + t_back(i) ≤ limitMin` koşulunu sağlayan **en büyük `i`**. Yani astronotun limit içinde habitata geri dönebileceği en uzak nokta; bu noktayı geçerse zamanında dönemez.
+  - Sadece `withinLimit = false` iken doldurulur; `withinLimit = true` ise `undefined` kalır. `i = 0` (habitat) her zaman koşulu sağlar, bu yüzden değer en az 0'dır.
+  - Araştırma süresi (`researchMinutes`) hedefte harcandığı için `pointOfNoReturnIndex` hesabına girmez; sadece `totalMin` içinde sayılır.
+  - Arayüz (Kişi 1) bu noktayı haritada rota üzerinde "Point of no return" işaretiyle gösterir.
 
 ### Senaryo parametreleri (`frontend/src/routing/config.ts`, Kişi 2)
 
