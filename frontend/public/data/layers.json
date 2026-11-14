@@ -1,0 +1,66 @@
+[
+  {
+    "id": "ortho",
+    "title": "HiRISE orthophoto",
+    "file": "ortho.png",
+    "source": "JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd.tif — USGS Mars 2020 TRN HiRISE orthomosaic (geographic variant); https://doi.org/10.5066/P9QJDP48; https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd.tif; processed from supplied local subset, not verified byte-identical to archive"
+  },
+  {
+    "id": "slope",
+    "title": "Slope (5 m DEM; scenario limit 25 degrees)",
+    "file": "slope.png",
+    "source": "JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif — USGS Mars 2020 TRN HiRISE DTM mosaic; https://doi.org/10.5066/P9REJ9JN; https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif; processed from supplied local subset, not verified byte-identical to archive; vertical reference not independently verified (derived)",
+    "unit": "°",
+    "legend": [
+      {
+        "value": 0,
+        "color": "#2b83ba",
+        "label": "0°"
+      },
+      {
+        "value": 10,
+        "color": "#abdda4",
+        "label": "10°"
+      },
+      {
+        "value": 20,
+        "color": "#fdae61",
+        "label": "20°"
+      },
+      {
+        "value": 25,
+        "color": "#d7191c",
+        "label": "25°"
+      },
+      {
+        "value": 25,
+        "color": "#7a1f8f",
+        "label": ">25° (scenario impassable)"
+      }
+    ]
+  },
+  {
+    "id": "roughness",
+    "title": "Roughness (P95-normalized)",
+    "file": "roughness.png",
+    "source": "JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif — USGS Mars 2020 TRN HiRISE DTM mosaic; https://doi.org/10.5066/P9REJ9JN; https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/HiRISE/JEZ_hirise_soc_006_DTM_MOLAtopography_DeltaGeoid_1m_Eqc_latTs0_lon0_blend40.tif; processed from supplied local subset, not verified byte-identical to archive; vertical reference not independently verified (derived)",
+    "unit": "m",
+    "legend": [
+      {
+        "value": 0.0,
+        "color": "#f7f4c3",
+        "label": "0.000 m"
+      },
+      {
+        "value": 0.275,
+        "color": "#e8a33d",
+        "label": "0.275 m"
+      },
+      {
+        "value": 0.55,
+        "color": "#8e2a1d",
+        "label": "0.550 m+"
+      }
+    ]
+  }
+]
