@@ -18,17 +18,38 @@ function failed(result: RouteResult, reason: RouteResult['reason']) {
 }
 
 describe('findRoute on synthetic terrain', () => {
+  it('prioritizes invalid input over bounds, then bounds over blocked endpoints', () => {
+    const g = grid(); g.elevation[0] = g.nodata;
+    failed(findRoute(g, cell(-1), cell(0.5), shortest), 'invalid-input');
+    failed(findRoute(g, cell(0), cell(3), shortest), 'out-of-bounds');
+    failed(findRoute(g, cell(0), cell(2), { ...shortest, maxSlopeDeg: 0 }), 'invalid-input');
+    failed(findRoute(g, cell(0), cell(2), shortest), 'start-blocked');
+  });
+  it('weights diagonal and straight edge slopes by distance', () => {
+    const g = grid(3, 2); g.slope = [0, 2, 20, 5, 7, 10];
+    const r = findRoute(g, cell(0), cell(2, 1), shortest);
+    expect(r.ok).toBe(true);
+    const weighted = r.profile.slice(1).reduce((sum, p, i) => sum
+      + (p.slopeDeg + r.profile[i].slopeDeg) / 2 * (p.distanceM - r.profile[i].distanceM), 0);
+    expect(r.meanSlopeDeg).toBeCloseTo(weighted / r.distanceM);
+    expect(r.meanSlopeDeg).not.toBeCloseTo(r.profile.reduce((sum, p) => sum + p.slopeDeg, 0) / r.profile.length);
+  });
+  it('retains a nonzero slope for the single-cell route', () => {
+    const g = grid(); g.slope[4] = 12;
+    const r = findRoute(g, cell(1, 1), cell(1, 1), shortest);
+    expect(r.meanSlopeDeg).toBe(12); expect(r.maxSlopeDeg).toBe(12); expect(r.durationMin).toBe(0);
+  });
   it('safely rejects missing runtime grid, stats, options and coordinates', () => {
     for (const value of [null, undefined, {}, { ...grid(), stats: undefined }, { ...grid(), stats: {} }]) {
-      failed(findRoute(value as Grid, cell(0), cell(1), shortest), 'unreachable');
+      failed(findRoute(value as Grid, cell(0), cell(1), shortest), 'invalid-input');
     }
-    failed(findRoute(grid(), cell(0), cell(1), null as unknown as RouteOptions), 'unreachable');
-    failed(findRoute(grid(), null as unknown as ReturnType<typeof cell>, cell(1), shortest), 'out-of-bounds');
-    failed(findRoute(grid(), cell(0), undefined as unknown as ReturnType<typeof cell>, shortest), 'out-of-bounds');
+    failed(findRoute(grid(), cell(0), cell(1), null as unknown as RouteOptions), 'invalid-input');
+    failed(findRoute(grid(), null as unknown as ReturnType<typeof cell>, cell(1), shortest), 'invalid-input');
+    failed(findRoute(grid(), cell(0), undefined as unknown as ReturnType<typeof cell>, shortest), 'invalid-input');
   });
   it('rejects sparse arrays rather than skipping missing cells', () => {
     const g = grid(); delete g.elevation[4];
-    failed(findRoute(g, cell(0), cell(1), shortest), 'unreachable');
+    failed(findRoute(g, cell(0), cell(1), shortest), 'invalid-input');
   });
   it('finds the shortest flat path and fills every result field', () => {
     const result = findRoute(grid(), cell(0), cell(2), shortest);
@@ -67,8 +88,9 @@ describe('findRoute on synthetic terrain', () => {
     failed(findRoute(g, cell(0), cell(2), shortest), endpoint === 'start' ? 'start-blocked' : 'goal-blocked');
   });
   it.each([cell(-1), cell(3), cell(0, -1), cell(0, 3), cell(0.5), cell(NaN), cell(Infinity)])('rejects invalid coordinate %j at either endpoint', c => {
-    failed(findRoute(grid(), c, cell(0), shortest), 'out-of-bounds');
-    failed(findRoute(grid(), cell(0), c, shortest), 'out-of-bounds');
+    const reason = Number.isInteger(c.col) && Number.isInteger(c.row) ? 'out-of-bounds' : 'invalid-input';
+    failed(findRoute(grid(), c, cell(0), shortest), reason);
+    failed(findRoute(grid(), cell(0), c, shortest), reason);
   });
   it('reports an unreachable goal across a complete barrier', () => {
     const g = grid(); g.slope.splice(3, 3, 30, 30, 30);
@@ -80,9 +102,9 @@ describe('findRoute on synthetic terrain', () => {
     expect(r.profile).toEqual([{ distanceM: 0, elevationM: 0, slopeDeg: 0 }]);
     expect([r.distanceM, r.durationMin, r.returnDurationMin, r.maxSlopeDeg, r.meanSlopeDeg]).toEqual([0, 0, 0, 0, 0]);
   });
-  it.each([0, 0.001])('handles roughnessP95=%s and zero maxSlopeDeg', p95 => {
+  it.each([0, 0.001])('handles roughnessP95=%s with valid slope limit', p95 => {
     const g = grid(); g.stats.roughnessP95 = p95; g.roughness.fill(100);
-    const r = findRoute(g, cell(0), cell(2, 2), { ...DEFAULT_OPTIONS, maxSlopeDeg: 0 });
+    const r = findRoute(g, cell(0), cell(2, 2), DEFAULT_OPTIONS);
     expect(r.ok).toBe(true); expect(r.distanceM).toBeCloseTo(20 * Math.SQRT2);
   });
   it('clamps distance weight without mutating caller options', () => {
@@ -113,28 +135,28 @@ describe('findRoute on synthetic terrain', () => {
     { width: 0 }, { height: 1.5 }, { cellSize: 0 }, { cellSize: Infinity },
     { elevation: [0] }, { slope: [0] }, { roughness: [0] }, { nodata: NaN },
   ])('rejects malformed grid %j', patch => {
-    failed(findRoute({ ...grid(), ...patch }, cell(0), cell(1), shortest), 'unreachable');
+    failed(findRoute({ ...grid(), ...patch }, cell(0), cell(1), shortest), 'invalid-input');
   });
   it.each(['elevation', 'slope', 'roughness'] as const)('rejects nonfinite %s values', field => {
     const g = grid(); g[field][4] = NaN;
-    failed(findRoute(g, cell(0), cell(1), shortest), 'unreachable');
+    failed(findRoute(g, cell(0), cell(1), shortest), 'invalid-input');
   });
   it.each([
     { wDistance: -1 }, { wSlope: -1 }, { wRoughness: -1 }, { wDistance: NaN },
-    { wSlope: Infinity }, { maxSlopeDeg: -1 }, { maxSlopeDeg: 91 }, { maxSlopeDeg: NaN },
+    { wSlope: Infinity }, { maxSlopeDeg: 0 }, { maxSlopeDeg: -1 }, { maxSlopeDeg: 91 }, { maxSlopeDeg: NaN },
   ] satisfies Partial<RouteOptions>[])('rejects invalid options %j', patch => {
-    failed(findRoute(grid(), cell(0), cell(1), { ...shortest, ...patch }), 'unreachable');
+    failed(findRoute(grid(), cell(0), cell(1), { ...shortest, ...patch }), 'invalid-input');
   });
   it('rejects invalid terrain ranges and statistics', () => {
     for (const patch of [{ slope: Array(9).fill(-1) }, { roughness: Array(9).fill(-1) },
       { stats: { ...grid().stats, roughnessP95: -1 } }]) {
-      failed(findRoute({ ...grid(), ...patch }, cell(0), cell(1), shortest), 'unreachable');
+      failed(findRoute({ ...grid(), ...patch }, cell(0), cell(1), shortest), 'invalid-input');
     }
   });
   it('does not leak Infinity on extreme elevation or costs', () => {
     const g = grid(2, 1); g.elevation[1] = Number.MAX_VALUE;
-    failed(findRoute(g, cell(0), cell(1), shortest), 'unreachable');
-    failed(findRoute(grid(), cell(0), cell(1), { ...shortest, wDistance: Number.MAX_VALUE }), 'unreachable');
+    failed(findRoute(g, cell(0), cell(1), shortest), 'invalid-input');
+    failed(findRoute(grid(), cell(0), cell(1), { ...shortest, wDistance: Number.MAX_VALUE }), 'invalid-input');
   });
   it('does not mutate input terrain or coordinates', () => {
     const g = grid(); const before = structuredClone(g); const start = Object.freeze(cell(0));

@@ -1,5 +1,6 @@
 import type { Cell, Grid, RouteOptions, RouteResult } from './types';
-import { MIN_DISTANCE_WEIGHT, SUIT_FACTOR } from './config';
+import { MIN_DISTANCE_WEIGHT } from './config';
+import { stepMinutes } from './tobler';
 import { MinHeap } from './heap';
 
 function failure(reason: NonNullable<RouteResult['reason']>): RouteResult {
@@ -23,7 +24,7 @@ function validGrid(g: Grid): boolean {
 
 function validOptions(o: RouteOptions): boolean {
   return !!o && [o.wDistance, o.wSlope, o.wRoughness].every(v => Number.isFinite(v) && v >= 0)
-    && Number.isFinite(o.maxSlopeDeg) && o.maxSlopeDeg >= 0 && o.maxSlopeDeg <= 90;
+    && Number.isFinite(o.maxSlopeDeg) && o.maxSlopeDeg > 0 && o.maxSlopeDeg <= 90;
 }
 
 function inside(g: Grid, c: Cell): boolean {
@@ -33,33 +34,31 @@ function inside(g: Grid, c: Cell): boolean {
 
 function summarize(g: Grid, indices: number[]): RouteResult {
   const path = indices.map(i => ({ col: i % g.width, row: Math.floor(i / g.width) }));
-  let distanceM = 0, durationMin = 0, returnDurationMin = 0, maximum = 0, sum = 0;
+  let distanceM = 0, durationMin = 0, returnDurationMin = 0, maximum = 0, weightedSlope = 0;
   const profile = indices.map((index, n) => {
     const slope = g.slope[index];
     maximum = Math.max(maximum, slope);
-    sum += slope;
     if (n > 0) {
       const previous = indices[n - 1];
       const d = Math.hypot(path[n].col - path[n - 1].col, path[n].row - path[n - 1].row) * g.cellSize;
-      const rise = (g.elevation[index] - g.elevation[previous]) / d;
-      // rise = tan(theta); 60 / (1000 * 6) converts metres and km/hour to minutes.
-      const minutes = (grade: number) => d / (100 * SUIT_FACTOR) * Math.exp(3.5 * Math.abs(grade + 0.05));
       distanceM += d;
-      durationMin += minutes(rise);
-      returnDurationMin += minutes(-rise);
+      weightedSlope += (g.slope[previous] / 2 + slope / 2) * d;
+      durationMin += stepMinutes(d, g.elevation[previous], g.elevation[index]);
+      returnDurationMin += stepMinutes(d, g.elevation[index], g.elevation[previous]);
     }
     return { distanceM, elevationM: g.elevation[index], slopeDeg: slope };
   });
   // Reject numerical overflow rather than reporting a usable route with infinite duration.
-  if (![distanceM, durationMin, returnDurationMin, sum].every(Number.isFinite)) return failure('unreachable');
-  // CONTRACT v2 does not prescribe weighting; retain the arithmetic cell mean.
-  return { ok: true, path, distanceM, maxSlopeDeg: maximum, meanSlopeDeg: sum / path.length,
+  if (![distanceM, durationMin, returnDurationMin, weightedSlope].every(Number.isFinite)) return failure('invalid-input');
+  return { ok: true, path, distanceM, maxSlopeDeg: maximum,
+    meanSlopeDeg: distanceM === 0 ? g.slope[indices[0]] : weightedSlope / distanceM,
     durationMin, returnDurationMin, profile };
 }
 
 export function findRoute(grid: Grid, start: Cell, goal: Cell, options: RouteOptions): RouteResult {
-  // v2 has no invalid-input reason; do not interpret this fallback as proof of disconnection.
-  if (!validGrid(grid) || !validOptions(options)) return failure('unreachable');
+  if (!validGrid(grid) || !validOptions(options)
+    || !start || !goal || !Number.isInteger(start.col) || !Number.isInteger(start.row)
+    || !Number.isInteger(goal.col) || !Number.isInteger(goal.row)) return failure('invalid-input');
   if (!inside(grid, start) || !inside(grid, goal)) return failure('out-of-bounds');
   const { width, height, cellSize, nodata } = grid;
   const passable = (i: number) => grid.elevation[i] !== nodata && grid.slope[i] !== nodata
@@ -74,6 +73,7 @@ export function findRoute(grid: Grid, start: Cell, goal: Cell, options: RouteOpt
   const costs = new Float64Array(width * height).fill(Infinity);
   const parents = new Float64Array(width * height).fill(-1);
   const open = new MinHeap();
+  let numericFailure = false;
   costs[startIndex] = 0;
   open.push({ index: startIndex, cost: 0, priority: heuristic(start.col, start.row) });
   for (let entry = open.pop(); entry; entry = open.pop()) {
@@ -95,11 +95,12 @@ export function findRoute(grid: Grid, start: Cell, goal: Cell, options: RouteOpt
       const d = cellSize * (dx !== 0 && dy !== 0 ? Math.SQRT2 : 1);
       const candidate = cost + d * (alpha + terrain(index) / 2 + terrain(next) / 2);
       const priority = candidate + heuristic(x, y);
-      if (!Number.isFinite(priority) || candidate >= costs[next]) continue;
+      if (!Number.isFinite(priority)) { numericFailure = true; continue; }
+      if (candidate >= costs[next]) continue;
       costs[next] = candidate;
       parents[next] = index;
       open.push({ index: next, cost: candidate, priority });
     }
   }
-  return failure('unreachable');
+  return failure(numericFailure ? 'invalid-input' : 'unreachable');
 }

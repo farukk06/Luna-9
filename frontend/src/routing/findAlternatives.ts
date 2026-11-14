@@ -6,7 +6,7 @@ export function findAlternatives(grid: Grid, start: Cell, goal: Cell, options: R
   const balanced = findRoute(grid, start, goal, options);
   // Do not hide invalid user weights by overwriting them with scenario defaults.
   const valid = !!options && [options.wDistance, options.wSlope, options.wRoughness].every(v => Number.isFinite(v) && v >= 0)
-    && Number.isFinite(options.maxSlopeDeg) && options.maxSlopeDeg >= 0 && options.maxSlopeDeg <= 90;
+    && Number.isFinite(options.maxSlopeDeg) && options.maxSlopeDeg > 0 && options.maxSlopeDeg <= 90;
   const shortest = valid ? findRoute(grid, start, goal, { ...options, wSlope: 0, wRoughness: 0 }) : balanced;
   const safest = valid ? findRoute(grid, start, goal, { ...options, ...SAFEST_WEIGHTS,
     wSlope: Math.max(SAFEST_WEIGHTS.wSlope, options.wSlope),
@@ -20,9 +20,16 @@ export function findAlternatives(grid: Grid, start: Cell, goal: Cell, options: R
       || (x.durationMin + x.returnDurationMin) - (y.durationMin + y.returnDurationMin)
       || x.distanceM - y.distanceM;
   });
-  const recommended = candidates[0] ?? 'balanced';
+  const recommended = candidates[0] ?? null;
+  const failureMessages: Record<NonNullable<typeof balanced.reason>, string> = {
+    'invalid-input': 'Route could not be computed (invalid input)',
+    'out-of-bounds': 'Point is outside the study area',
+    'start-blocked': 'Habitat cell is not passable',
+    'goal-blocked': 'Target cell is not passable',
+    unreachable: 'No safe route within the slope limit',
+  };
   const reason = candidates.length === 0
-    ? 'No usable route was produced; balanced is a placeholder, not a recommendation.'
+    ? failureMessages[balanced.reason ?? 'invalid-input']
     : `${recommended}: scenario ranking uses maximum slope, mean slope, round-trip time, then distance; ties prefer balanced, safest, shortest.`;
   return { ...routes, recommended, reason };
 }

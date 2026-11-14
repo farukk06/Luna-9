@@ -24,11 +24,11 @@ export interface ProfilePoint { distanceM: number; elevationM: number; slopeDeg:
 
 export interface RouteResult {
   ok: boolean;
-  reason?: 'unreachable' | 'start-blocked' | 'goal-blocked' | 'out-of-bounds';
+  reason?: 'unreachable' | 'start-blocked' | 'goal-blocked' | 'out-of-bounds' | 'invalid-input';
   path: Cell[];             // başlangıç ve hedef dahil
   distanceM: number;
   maxSlopeDeg: number;
-  meanSlopeDeg: number;
+  meanSlopeDeg: number;     // distance-weighted mean of edge endpoint slopes
   durationMin: number;        // gidiş süresi: başlangıç → hedef, Tobler × skafandr katsayısı
   returnDurationMin: number;  // dönüş süresi: aynı yol ters yönde (hedef → başlangıç), ayrı Tobler hesabı
   profile: ProfilePoint[];
@@ -38,7 +38,7 @@ export interface Alternatives {
   shortest: RouteResult;    // β = γ = 0
   safest: RouteResult;      // β ve γ yüksek
   balanced: RouteResult;    // kullanıcının ayarları
-  recommended: 'shortest' | 'safest' | 'balanced';
+  recommended: 'shortest' | 'safest' | 'balanced' | null;
   reason: string;           // tek cümle, ör. "400 m daha uzun ama dik yamaçtan kaçınıyor"
 }
 

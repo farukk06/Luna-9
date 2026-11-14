@@ -11,6 +11,17 @@ function grid(): Grid {
     stats: { elevationMin: 0, elevationMax: 0, slopeMax: 20, roughnessP95: 1 } };
 }
 afterEach(() => vi.restoreAllMocks());
+it.each([
+  ['invalid-input', 'Route could not be computed (invalid input)'],
+  ['out-of-bounds', 'Point is outside the study area'],
+  ['start-blocked', 'Habitat cell is not passable'],
+  ['goal-blocked', 'Target cell is not passable'],
+  ['unreachable', 'No safe route within the slope limit'],
+] as const)('explains balanced failure %s with no recommendation', (reason, message) => {
+  vi.spyOn(engine, 'findRoute').mockReturnValue({ ...bad, reason });
+  const result = findAlternatives(grid(), cell(0), cell(4), DEFAULT_OPTIONS);
+  expect(result.recommended).toBeNull(); expect(result.reason).toBe(message);
+});
 it('returns identical flat routes and deterministically prefers balanced on ties', () => {
   const result = findAlternatives(grid(), cell(0), cell(4), DEFAULT_OPTIONS);
   expect(result.shortest).toEqual(result.balanced); expect(result.safest).toEqual(result.balanced);
@@ -32,7 +43,7 @@ it('applies scenario weights and preserves balanced user options and shared obst
 it('reports no recommendation explicitly when every route fails', () => {
   const g = grid(); g.slope.fill(40, 5, 10);
   const result = findAlternatives(g, cell(0, 0), cell(4, 2), DEFAULT_OPTIONS);
-  expect(result.recommended).toBe('balanced'); expect(result.reason).toContain('not a recommendation');
+  expect(result.recommended).toBeNull(); expect(result.reason).toBe('No safe route within the slope limit');
   expect([result.shortest, result.safest, result.balanced].every(r => !r.ok)).toBe(true);
 });
 it.each([{ wSlope: -1 }, { wRoughness: NaN }, { maxSlopeDeg: 91 }])('does not mask invalid options %j', patch => {
