@@ -1,14 +1,22 @@
-import type { Cell, Grid, RouteResult } from '../routing/types'
+import type { Alternatives, Cell, EvaCheck, EvaProfile, Grid } from '../routing/types'
 import { cellIndex } from '../map/coords'
 import { formatNumber } from '../map/format'
+import RoutesSection from './RoutesSection'
 
 export type ClickMode = 'target' | 'habitat'
+
+export interface RoutingView {
+  computing: boolean
+  alternatives: Alternatives | null
+  eva: EvaCheck | null
+  evaProfile: EvaProfile
+}
 
 interface MissionPanelProps {
   grid: Grid
   habitat: Cell | null
   target: Cell | null
-  route: RouteResult | null
+  routing: RoutingView | null
   clickMode: ClickMode
   onToggleMoveHabitat: () => void
   onClearTarget: () => void
@@ -30,22 +38,8 @@ function CellStats({ cell, grid }: { cell: Cell; grid: Grid }) {
   )
 }
 
-function RouteStats({ route }: { route: RouteResult }) {
-  if (!route.ok) return <p className="muted">No route: {route.reason}</p>
-  return (
-    <dl className="stats">
-      <dt>Distance</dt>
-      <dd>{route.distanceM.toFixed(0)} m</dd>
-      <dt>Outbound</dt>
-      <dd>{route.durationMin.toFixed(1)} min</dd>
-      <dt>Return</dt>
-      <dd>{route.returnDurationMin.toFixed(1)} min</dd>
-    </dl>
-  )
-}
-
 function MissionPanel(props: MissionPanelProps) {
-  const { grid, habitat, target, route, clickMode } = props
+  const { grid, habitat, target, routing, clickMode } = props
   const placingHabitat = clickMode === 'habitat'
   return (
     <>
@@ -78,11 +72,13 @@ function MissionPanel(props: MissionPanelProps) {
         )}
       </section>
 
-      {route && (
-        <section className="panel-section">
-          <h3>Route (mock, temporary)</h3>
-          <RouteStats route={route} />
-        </section>
+      {target && routing && (
+        <RoutesSection
+          computing={routing.computing}
+          alternatives={routing.alternatives}
+          eva={routing.eva}
+          evaProfile={routing.evaProfile}
+        />
       )}
     </>
   )

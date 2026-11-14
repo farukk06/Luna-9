@@ -1,11 +1,11 @@
 // Single switch point for the routing engine.
 // The rest of the app imports route functions and constants ONLY from here.
-// When Person 2's real routing module is ready, replace '../mocks' with '../routing'
-// in the export line below; nothing else in the app has to change.
-export { findRoute, findAlternatives, checkEva } from '../mocks';
-export { DEFAULT_OPTIONS, DEFAULT_EVA_PROFILE, SUIT_FACTOR, MIN_DISTANCE_WEIGHT } from '../mocks';
+// Now backed by Person 2's real A* engine in ../routing (CONTRACT Section 9).
+// To fall back to the mock engine for debugging, change '../routing' to '../mocks'.
+export { findRoute, findAlternatives, checkEva } from '../routing';
+export { DEFAULT_OPTIONS, DEFAULT_EVA_PROFILE, SUIT_FACTOR, MIN_DISTANCE_WEIGHT } from '../routing';
 
-// Shared types are already the real ones and do not change on the switch.
+// Shared types do not change on the switch.
 export type {
   Grid,
   Cell,

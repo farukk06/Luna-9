@@ -2,37 +2,52 @@ import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
-import { Circle, Fill, Stroke, Style, Text } from 'ol/style'
+import { Circle, Fill, RegularShape, Stroke, Style, Text } from 'ol/style'
 import type { FeatureLike } from 'ol/Feature'
 import type { Cell, Grid } from '../routing/types'
+import { MARKER_COLORS } from '../config/routes'
 import { cellToMap } from './coords'
 
-export type MarkerKind = 'habitat' | 'target'
+export type MarkerKind = 'habitat' | 'target' | 'pnr'
 
-const MARKERS: Record<MarkerKind, { color: string; label: string }> = {
-  habitat: { color: '#3fae5c', label: 'Habitat' },
-  target: { color: '#e8892c', label: 'Target' },
-}
+const OUTLINE = '#111316'
 
-function markerStyle(kind: MarkerKind): Style {
-  const { color, label } = MARKERS[kind]
-  return new Style({
-    image: new Circle({
-      radius: 7,
-      fill: new Fill({ color }),
-      stroke: new Stroke({ color: '#111316', width: 2 }),
-    }),
-    text: new Text({
-      text: label,
-      offsetY: 18,
-      font: '600 12px system-ui, sans-serif',
-      fill: new Fill({ color: '#ffffff' }),
-      stroke: new Stroke({ color: '#111316', width: 3 }), // halo keeps it readable on any terrain
-    }),
+function label(text: string): Text {
+  return new Text({
+    text,
+    offsetY: 18,
+    font: '600 12px system-ui, sans-serif',
+    fill: new Fill({ color: '#ffffff' }),
+    stroke: new Stroke({ color: OUTLINE, width: 3 }), // halo keeps it readable on any terrain
   })
 }
 
-const STYLES: Record<MarkerKind, Style> = { habitat: markerStyle('habitat'), target: markerStyle('target') }
+function circleMarker(color: string, text: string): Style {
+  return new Style({
+    image: new Circle({ radius: 7, fill: new Fill({ color }), stroke: new Stroke({ color: OUTLINE, width: 2 }) }),
+    text: label(text),
+  })
+}
+
+// A red diamond, a different shape from habitat/target so it is not read as a place to go.
+function pointOfNoReturnMarker(): Style {
+  return new Style({
+    image: new RegularShape({
+      points: 4,
+      radius: 9,
+      angle: 0,
+      fill: new Fill({ color: MARKER_COLORS.pointOfNoReturn }),
+      stroke: new Stroke({ color: '#ffffff', width: 2 }),
+    }),
+    text: label('Point of no return'),
+  })
+}
+
+const STYLES: Record<MarkerKind, Style> = {
+  habitat: circleMarker(MARKER_COLORS.habitat, 'Habitat'),
+  target: circleMarker(MARKER_COLORS.target, 'Target'),
+  pnr: pointOfNoReturnMarker(),
+}
 
 function styleFor(feature: FeatureLike): Style {
   const kind = feature.get('kind') as MarkerKind
@@ -48,11 +63,19 @@ function markerFeature(kind: MarkerKind, cell: Cell, grid: Grid): Feature {
   return new Feature({ geometry: new Point([x, y]), kind })
 }
 
+export interface MarkerCells {
+  habitat: Cell | null
+  target: Cell | null
+  pointOfNoReturn: Cell | null
+}
+
 /** Replaces the markers in the source; the map itself is left untouched. */
-export function updateMarkers(source: VectorSource, grid: Grid, habitat: Cell | null, target: Cell | null): void {
+export function updateMarkers(source: VectorSource, grid: Grid, cells: MarkerCells): void {
   const features: Feature[] = []
-  if (habitat) features.push(markerFeature('habitat', habitat, grid))
-  if (target) features.push(markerFeature('target', target, grid))
+  // Point of no return first, so habitat/target draw over it if they coincide.
+  if (cells.pointOfNoReturn) features.push(markerFeature('pnr', cells.pointOfNoReturn, grid))
+  if (cells.habitat) features.push(markerFeature('habitat', cells.habitat, grid))
+  if (cells.target) features.push(markerFeature('target', cells.target, grid))
   source.clear()
   source.addFeatures(features)
 }

@@ -1,41 +1,43 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Map from 'ol/Map'
-import View from 'ol/View'
 import ImageLayer from 'ol/layer/Image'
 import ImageStatic from 'ol/source/ImageStatic'
-import Projection from 'ol/proj/Projection'
+import VectorSource from 'ol/source/Vector'
 import ScaleLine from 'ol/control/ScaleLine'
 import { defaults as defaultControls } from 'ol/control/defaults'
-import { buffer, getHeight, getWidth, type Extent } from 'ol/extent'
 import 'ol/ol.css'
-import VectorSource from 'ol/source/Vector'
 import type { Cell, Grid } from '../routing/types'
 import { passabilityIssue } from './cells'
-import { cellIndex, isPassableCell, mapToCell } from './coords'
-import { formatNumber } from './format'
+import { mapToCell } from './coords'
+import { READOUT_HINT, createLocalProjection, createView, gridExtent, readoutText } from './mapSetup'
 import { createMarkerLayer, updateMarkers } from './markers'
+import { createRouteLayer, updateRoutes, type RouteLine } from './routeLayer'
+import { createStopsLayer, updateStops } from './stopsLayer'
+import type { Stop } from '../services/stops'
+import type VectorLayer from 'ol/layer/Vector'
 
-const READOUT_HINT = 'Move the pointer over the map'
+export type OverlayId = 'slope' | 'roughness'
 
-/** Text for the pointer readout box at map coordinate (x, y). */
-export function readoutText(x: number, y: number, grid: Grid): string {
-  const cell = mapToCell(x, y, grid)
-  if (!cell) return 'outside study area'
-  const head = `x ${formatNumber(x, 0)} m, y ${formatNumber(y, 0)} m · cell (${cell.col}, ${cell.row})`
-  if (!isPassableCell(cell, grid)) return `${head} · no data`
-  const i = cellIndex(cell, grid)
-  return `${head} · elev ${formatNumber(grid.elevation[i], 1)} m · slope ${formatNumber(grid.slope[i], 1)}°`
+export interface OverlaySpec {
+  url: string
+  visible: boolean
+  /** 0–1 */
+  opacity: number
 }
 
 interface MapViewProps {
   grid: Grid
   orthoUrl: string
-  slopeUrl: string
-  slopeVisible: boolean
-  /** 0–1 */
-  slopeOpacity: number
+  overlays: Record<OverlayId, OverlaySpec>
   habitat: Cell | null
   target: Cell | null
+  /** Successful routes to draw; empty when nothing should be drawn. */
+  routes: RouteLine[]
+  pointOfNoReturn: Cell | null
+  /** Science stops already checked to be placeable on this grid. */
+  stops: Stop[]
+  stopsVisible: boolean
+  onStopClick: (stopId: string) => void
   maxSlopeDeg: number
   /** Called only for passable cells inside the study area. */
   onCellClick: (cell: Cell) => void
@@ -44,63 +46,41 @@ interface MapViewProps {
 }
 
 const NOTICE_MS = 2500
-
-/** Map extent in local metres (CONTRACT Section 1): [0, 0, W, H]. */
-export function gridExtent(grid: Grid): Extent {
-  return [0, 0, grid.width * grid.cellSize, grid.height * grid.cellSize]
-}
-
-/**
- * Local flat metric projection. No transform to EPSG:4326 is ever registered,
- * and the point resolution is fixed to 1 unit = 1 m, so OpenLayers never
- * treats these coordinates as positions on Earth (the scale bar stays exact).
- * The object is passed directly instead of being registered by code, so a
- * grid with a different size never collides with an older definition.
- */
-function createLocalProjection(extent: Extent): Projection {
-  return new Projection({
-    code: 'LUNA9-LOCAL',
-    units: 'm',
-    extent,
-    getPointResolution: (resolution: number) => resolution,
-  })
-}
-
-function createView(grid: Grid, projection: Projection, extent: Extent): View {
-  const maxSide = Math.max(getWidth(extent), getHeight(extent))
-  return new View({
-    projection,
-    // Panning is limited to the work area plus a 20 % margin.
-    extent: buffer(extent, maxSide * 0.2),
-    showFullExtent: true,
-    // Zoom out: whole area in ~200 px. Zoom in: one cell ≈ 8 screen px.
-    maxResolution: maxSide / 200,
-    minResolution: grid.cellSize / 8,
-  })
-}
+const STOP_HIT_TOLERANCE_PX = 5
 
 function MapView(props: MapViewProps) {
-  const { grid, orthoUrl, slopeUrl, slopeVisible, slopeOpacity, habitat, target, maxSlopeDeg, onCellClick, hint } =
-    props
+  const { grid, orthoUrl, overlays, habitat, target, routes, pointOfNoReturn } = props
+  const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint } = props
+  const { slope, roughness } = overlays
+  // Only the URLs rebuild the map; visibility/opacity are applied to the existing layers.
+  const slopeUrl = slope.url
+  const roughnessUrl = roughness.url
   const targetRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
-  const slopeLayerRef = useRef<ImageLayer<ImageStatic> | null>(null)
-  // Initial layer state for a freshly built map; later changes go through setVisible/setOpacity.
-  const slopeStateRef = useRef({ visible: slopeVisible, opacity: slopeOpacity })
+  const overlayLayersRef = useRef<Partial<Record<OverlayId, ImageLayer<ImageStatic>>>>({})
+  // Initial overlay state for a freshly built map; later changes go through setVisible/setOpacity.
+  const overlaysRef = useRef(overlays)
   const readoutRef = useRef<HTMLDivElement>(null)
-  // One marker source for the component's lifetime; marker changes only touch it.
+  // Vector sources live as long as the component; route/marker changes only touch them.
   const [markerSource] = useState(() => new VectorSource())
+  const [routeSource] = useState(() => new VectorSource())
+  const [stopsSource] = useState(() => new VectorSource())
+  const stopsLayerRef = useRef<VectorLayer | null>(null)
+  const stopsVisibleRef = useRef(stopsVisible)
   const [notice, setNotice] = useState<string | null>(null)
   const noticeTimer = useRef<number | undefined>(undefined)
 
   // The click handler is registered once per map, so it reads the latest
   // callback and slope limit through refs instead of recreating the map.
   const onCellClickRef = useRef(onCellClick)
+  const onStopClickRef = useRef(onStopClick)
   const maxSlopeRef = useRef(maxSlopeDeg)
   useEffect(() => {
     onCellClickRef.current = onCellClick
+    onStopClickRef.current = onStopClick
+    stopsVisibleRef.current = stopsVisible
     maxSlopeRef.current = maxSlopeDeg
-    slopeStateRef.current = { visible: slopeVisible, opacity: slopeOpacity }
+    overlaysRef.current = overlays
   })
 
   const showNotice = useCallback((text: string) => {
@@ -112,14 +92,31 @@ function MapView(props: MapViewProps) {
   useEffect(() => () => window.clearTimeout(noticeTimer.current), [])
 
   useEffect(() => {
-    updateMarkers(markerSource, grid, habitat, target)
-  }, [markerSource, grid, habitat, target])
+    updateMarkers(markerSource, grid, { habitat, target, pointOfNoReturn })
+  }, [markerSource, grid, habitat, target, pointOfNoReturn])
+
+  useEffect(() => {
+    updateRoutes(routeSource, grid, routes)
+  }, [routeSource, grid, routes])
+
+  useEffect(() => {
+    updateStops(stopsSource, grid, stops)
+  }, [stopsSource, grid, stops])
+
+  useEffect(() => {
+    stopsLayerRef.current?.setVisible(stopsVisible)
+  }, [stopsVisible])
 
   // Visibility/opacity changes only touch the layer: view (zoom, pan) and markers stay as they are.
   useEffect(() => {
-    slopeLayerRef.current?.setVisible(slopeVisible)
-    slopeLayerRef.current?.setOpacity(slopeOpacity)
-  }, [slopeVisible, slopeOpacity])
+    overlayLayersRef.current.slope?.setVisible(slope.visible)
+    overlayLayersRef.current.slope?.setOpacity(slope.opacity)
+  }, [slope.visible, slope.opacity])
+
+  useEffect(() => {
+    overlayLayersRef.current.roughness?.setVisible(roughness.visible)
+    overlayLayersRef.current.roughness?.setOpacity(roughness.opacity)
+  }, [roughness.visible, roughness.opacity])
 
   useEffect(() => {
     if (!targetRef.current) return
@@ -128,17 +125,31 @@ function MapView(props: MapViewProps) {
     const ortho = new ImageLayer({
       source: new ImageStatic({ url: orthoUrl, projection, imageExtent: extent }),
     })
-    // Same imageExtent as the base image, so slope pixels sit exactly on their cells.
-    const slope = new ImageLayer({
-      source: new ImageStatic({ url: slopeUrl, projection, imageExtent: extent }),
-      visible: slopeStateRef.current.visible,
-      opacity: slopeStateRef.current.opacity,
-    })
-    slopeLayerRef.current = slope
+    // Same imageExtent as the base image, so overlay pixels sit exactly on their cells.
+    const overlayLayer = (id: OverlayId) => {
+      const spec = overlaysRef.current[id]
+      return new ImageLayer({
+        source: new ImageStatic({ url: id === 'slope' ? slopeUrl : roughnessUrl, projection, imageExtent: extent }),
+        visible: spec.visible,
+        opacity: spec.opacity,
+      })
+    }
+    const slopeLayer = overlayLayer('slope')
+    const roughnessLayer = overlayLayer('roughness')
+    overlayLayersRef.current = { slope: slopeLayer, roughness: roughnessLayer }
+    const stopsLayer = createStopsLayer(stopsSource, stopsVisibleRef.current)
+    stopsLayerRef.current = stopsLayer
     const map = new Map({
       target: targetRef.current,
-      // Draw order, bottom to top: base image → slope overlay → habitat/target markers.
-      layers: [ortho, slope, createMarkerLayer(markerSource)],
+      // Draw order, bottom to top: base image → slope → roughness → routes → stops → markers.
+      layers: [
+        ortho,
+        slopeLayer,
+        roughnessLayer,
+        createRouteLayer(routeSource),
+        stopsLayer,
+        createMarkerLayer(markerSource),
+      ],
       view: createView(grid, projection, extent),
       controls: defaultControls({ attribution: false }).extend([new ScaleLine({ units: 'metric' })]),
     })
@@ -150,16 +161,25 @@ function MapView(props: MapViewProps) {
     const setReadout = (text: string) => {
       if (readoutRef.current) readoutRef.current.textContent = text
     }
+    const element = targetRef.current
+    const stopHitOptions = { layerFilter: (layer: unknown) => layer === stopsLayer, hitTolerance: STOP_HIT_TOLERANCE_PX }
     map.on('pointermove', (event) => {
       if (event.dragging) return
       const [x, y] = event.coordinate
       setReadout(readoutText(x, y, grid))
+      // Pointer cursor over a stop hints that it can be clicked.
+      element.style.cursor = map.hasFeatureAtPixel(event.pixel, stopHitOptions) ? 'pointer' : ''
     })
-    const element = targetRef.current
     const resetReadout = () => setReadout(READOUT_HINT)
     element.addEventListener('pointerleave', resetReadout)
 
     map.on('singleclick', (event) => {
+      // A click on a stop opens its card instead of setting a target.
+      const stopId = map.forEachFeatureAtPixel(event.pixel, (f) => f.get('stopId') as string | undefined, stopHitOptions)
+      if (stopId) {
+        onStopClickRef.current(stopId)
+        return
+      }
       const [x, y] = event.coordinate
       const cell = mapToCell(x, y, grid)
       if (!cell) return // outside the study area: ignore silently
@@ -175,9 +195,10 @@ function MapView(props: MapViewProps) {
       map.setTarget(undefined)
       map.dispose()
       mapRef.current = null
-      slopeLayerRef.current = null
+      overlayLayersRef.current = {}
+      stopsLayerRef.current = null
     }
-  }, [grid, orthoUrl, slopeUrl, markerSource, showNotice])
+  }, [grid, orthoUrl, slopeUrl, roughnessUrl, markerSource, routeSource, stopsSource, showNotice])
 
   return (
     <div className="map-view">
