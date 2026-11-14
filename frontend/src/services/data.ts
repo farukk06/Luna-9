@@ -1,8 +1,8 @@
 import type { Grid } from '../routing/types';
-import { createMockGrid } from '../mocks/mockGrid';
-import { renderHillshade, renderSlope } from '../mocks/mockImages';
+import { LARGE_MOCK_SPEC, type MockGridSpec, createMockGrid } from '../mocks/mockGrid';
+import { renderHillshade } from '../mocks/mockImages';
 import { slopeColorStops } from '../map/colorScale';
-import { renderRoughness } from '../map/rasterImages';
+import { renderRoughness, renderSlope } from '../map/rasterImages';
 import { DEFAULT_OPTIONS } from './routing';
 
 // Data source layer: uses Person 2's files in /public/data when they exist and
@@ -102,7 +102,22 @@ export function parseGridSource(raw: unknown): GridSourceInfo {
   return info;
 }
 
-export async function loadGrid(): Promise<{ grid: Grid; source: DataSource; sourceInfo: GridSourceInfo }> {
+/**
+ * Development switch: "?mock=400" in the page URL forces a 400×400, 5 m mock
+ * grid (the real grid's size) for performance tests. Any other value, or no
+ * parameter, keeps the normal behaviour.
+ */
+export function mockSpecFromSearch(search: string): MockGridSpec | null {
+  return new URLSearchParams(search).get('mock') === String(LARGE_MOCK_SPEC.cells) ? LARGE_MOCK_SPEC : null;
+}
+
+export async function loadGrid(
+  forcedMock: MockGridSpec | null = null,
+): Promise<{ grid: Grid; source: DataSource; sourceInfo: GridSourceInfo }> {
+  if (forcedMock) {
+    console.info(`Using a ${forcedMock.cells}×${forcedMock.cells} mock grid (${forcedMock.cellSize} m cells) from the URL.`);
+    return { grid: createMockGrid(forcedMock), source: 'mock', sourceInfo: {} };
+  }
   const data = await fetchJson('/data/grid.json');
   if (isValidGrid(data)) return { grid: data, source: 'real', sourceInfo: parseGridSource(data) };
   return { grid: createMockGrid(), source: 'mock', sourceInfo: {} };
@@ -150,14 +165,20 @@ export async function loadLayers(): Promise<{ layers: LayerInfo[]; source: DataS
   return { layers: mockLayers(), source: 'mock' };
 }
 
+export const REAL_ORTHO_URL = '/data/ortho.png';
+
 /**
- * Real data uses Person 2's ortho/slope PNGs; mock data renders them from the
- * grid. Roughness is always rendered here from grid.roughness (browser only).
+ * Slope and roughness are always drawn in the browser from grid.json, with the
+ * same colour scales as the legends (slope.png / roughness.png are not used,
+ * so they may be missing). Only the base image comes from a file: Person 2's
+ * ortho.png with real data, a hillshade of the grid with mock data.
  */
 export function getLayerImageUrls(grid: Grid, source: DataSource): LayerImageUrls {
-  const roughness = renderRoughness(grid);
-  if (source === 'real') return { ortho: '/data/ortho.png', slope: '/data/slope.png', roughness };
-  return { ortho: renderHillshade(grid), slope: renderSlope(grid, DEFAULT_OPTIONS.maxSlopeDeg), roughness };
+  return {
+    ortho: source === 'real' ? REAL_ORTHO_URL : renderHillshade(grid),
+    slope: renderSlope(grid, DEFAULT_OPTIONS.maxSlopeDeg),
+    roughness: renderRoughness(grid),
+  };
 }
 
 export interface SourceContext {

@@ -1,7 +1,9 @@
 import type { Grid } from '../routing/types'
-import { ROUGHNESS_STOPS, colorForValue, normalizedRoughness } from './colorScale'
+import { ROUGHNESS_STOPS, colorForValue, normalizedRoughness, slopeColor } from './colorScale'
 
-// Client-side raster images built from grid arrays. Pixel (x, y) = cell
+// Client-side raster images built from grid arrays. Slope and roughness are
+// always drawn here, for mock and real data alike, so the map uses exactly the
+// colour scales of the legends (map/colorScale.ts). Pixel (x, y) = cell
 // (col, row), so the top image row is grid row 0 (north up, CONTRACT 1 and 4).
 
 /** Draws RGBA pixels on a canvas and returns a PNG data URL (browser only). */
@@ -32,4 +34,20 @@ export function roughnessPixels(grid: Grid): Uint8ClampedArray {
 
 export function renderRoughness(grid: Grid): string {
   return pixelsToDataUrl(roughnessPixels(grid), grid.width, grid.height)
+}
+
+/** RGBA pixels of the slope layer; cells above maxSlopeDeg get the impassable colour. */
+export function slopePixels(grid: Grid, maxSlopeDeg: number): Uint8ClampedArray {
+  const px = new Uint8ClampedArray(grid.width * grid.height * 4)
+  for (let i = 0; i < grid.width * grid.height; i++) {
+    const s = grid.slope[i]
+    if (s === grid.nodata || grid.elevation[i] === grid.nodata) continue
+    const [r, g, b] = slopeColor(s, maxSlopeDeg)
+    px.set([r, g, b, 255], i * 4)
+  }
+  return px
+}
+
+export function renderSlope(grid: Grid, maxSlopeDeg: number): string {
+  return pixelsToDataUrl(slopePixels(grid, maxSlopeDeg), grid.width, grid.height)
 }

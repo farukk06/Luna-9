@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createMockGrid } from './mockGrid';
-import { hillshadePixels, slopePixels } from './mockImages';
-import { roughnessPixels } from '../map/rasterImages';
+import { hillshadePixels } from './mockImages';
+import { roughnessPixels, slopePixels } from '../map/rasterImages';
 
 // Canvas is not available in the Node test environment, so the pure pixel
 // functions are tested instead of the data-URL wrappers.
