@@ -13,7 +13,17 @@ describe('generated images', () => {
     // The mock NoData patch is in the north-east corner (row 0, last column).
     for (const px of [hillshadePixels(grid), slopePixels(grid, 25), roughnessPixels(grid)]) {
       expect(alphaAt(px, grid.width - 1, 0)).toBe(0);
+    }
+    for (const px of [hillshadePixels(grid), roughnessPixels(grid)]) {
       expect(alphaAt(px, grid.width - 1, grid.height - 1)).toBe(255);
     }
+  });
+
+  it('draws slope opacity from the slope: flat cells transparent, steep cells opaque', () => {
+    const px = slopePixels(grid, 25);
+    const steepest = grid.slope.indexOf(grid.stats.slopeMax);
+    const flattest = grid.slope.findIndex((s) => s !== grid.nodata && s <= 3);
+    expect(px[steepest * 4 + 3]).toBe(255);
+    expect(px[flattest * 4 + 3]).toBe(0);
   });
 });

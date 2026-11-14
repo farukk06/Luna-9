@@ -46,10 +46,11 @@ export const MISSION_DEFAULTS: Record<DataSource, MissionDefaults> = {
     target: { kind: 'fraction', x: 0.795, y: 0.135 },
   },
   real: {
-    // To be filled in from the real grid, in local metres, e.g.
-    // { kind: 'map', xM: 300, yM: 400 }. Never invented: left empty until chosen.
-    habitat: null,
-    target: null,
+    // Demo pair chosen by the team on the real grid; habitat pending science review by Person 3.
+    // Cell centres converted with CONTRACT Section 1 (400×400 grid, 5 m cells, H = 2000 m):
+    // x = (col + 0.5) · 5, y = H − (row + 0.5) · 5.
+    habitat: { kind: 'map', xM: 602.5, yM: 597.5 }, // cell (120, 280)
+    target: { kind: 'map', xM: 1227.5, yM: 1672.5 }, // cell (245, 65)
   },
 }
 

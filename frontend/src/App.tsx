@@ -23,7 +23,7 @@ import { type Stop, loadStops, placeableStops, stopCell } from './services/stops
 import StopCard from './panels/StopCard'
 
 const MAX_SLOPE_DEG = DEFAULT_OPTIONS.maxSlopeDeg
-const DEFAULT_SLOPE_LAYER: OverlayState = { visible: true, opacity: 0.6 }
+const DEFAULT_SLOPE_LAYER: OverlayState = { visible: true, opacity: 0.5 }
 const DEFAULT_ROUGHNESS_LAYER: OverlayState = { visible: false, opacity: 0.6 }
 
 interface LoadedData {

@@ -1,5 +1,5 @@
 import type { Grid } from '../routing/types'
-import { ROUGHNESS_STOPS, colorForValue, normalizedRoughness, slopeColor } from './colorScale'
+import { ROUGHNESS_STOPS, colorForValue, normalizedRoughness, slopeAlpha, slopeColor } from './colorScale'
 
 // Client-side raster images built from grid arrays. Slope and roughness are
 // always drawn here, for mock and real data alike, so the map uses exactly the
@@ -36,14 +36,19 @@ export function renderRoughness(grid: Grid): string {
   return pixelsToDataUrl(roughnessPixels(grid), grid.width, grid.height)
 }
 
-/** RGBA pixels of the slope layer; cells above maxSlopeDeg get the impassable colour. */
+/**
+ * RGBA pixels of the slope layer; cells above maxSlopeDeg get the impassable
+ * colour. Gentle slopes fade to transparent (slopeAlpha) so the photo shows.
+ */
 export function slopePixels(grid: Grid, maxSlopeDeg: number): Uint8ClampedArray {
   const px = new Uint8ClampedArray(grid.width * grid.height * 4)
   for (let i = 0; i < grid.width * grid.height; i++) {
     const s = grid.slope[i]
     if (s === grid.nodata || grid.elevation[i] === grid.nodata) continue
+    const alpha = Math.round(slopeAlpha(s, maxSlopeDeg) * 255)
+    if (alpha === 0) continue
     const [r, g, b] = slopeColor(s, maxSlopeDeg)
-    px.set([r, g, b, 255], i * 4)
+    px.set([r, g, b, alpha], i * 4)
   }
   return px
 }

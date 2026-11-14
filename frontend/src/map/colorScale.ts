@@ -58,6 +58,34 @@ export function slopeColor(slopeDeg: number, maxSlopeDeg: number): Rgb {
   return colorForValue(slopeDeg, slopeColorStops(maxSlopeDeg))
 }
 
+// Opacity by slope, so gentle terrain does not paint the whole photo: most of
+// the real area is below 5°. The colours themselves stay the same.
+/** At or below this slope a cell is fully transparent. */
+export const SLOPE_TRANSPARENT_MAX_DEG = 3
+/** From this slope up a cell is fully opaque (in between: linear ramp). */
+export const SLOPE_OPAQUE_FROM_DEG = 10
+
+/** 0–1 alpha of a slope cell; impassable cells are always fully opaque. */
+export function slopeAlpha(slopeDeg: number, maxSlopeDeg: number): number {
+  if (slopeDeg > maxSlopeDeg) return 1
+  const t = (slopeDeg - SLOPE_TRANSPARENT_MAX_DEG) / (SLOPE_OPAQUE_FROM_DEG - SLOPE_TRANSPARENT_MAX_DEG)
+  return Math.min(Math.max(t, 0), 1)
+}
+
+/** CSS gradient of the slope legend, with the same colours and opacity ramp as the map image. */
+export function slopeCssGradient(maxSlopeDeg: number): string {
+  const values = [
+    ...new Set([...slopeColorStops(maxSlopeDeg).map((s) => s.value), SLOPE_TRANSPARENT_MAX_DEG, SLOPE_OPAQUE_FROM_DEG]),
+  ]
+    .filter((v) => v >= 0 && v <= maxSlopeDeg)
+    .sort((x, y) => x - y)
+  const parts = values.map((v) => {
+    const [r, g, b] = slopeColor(v, maxSlopeDeg)
+    return `rgba(${r}, ${g}, ${b}, ${slopeAlpha(v, maxSlopeDeg).toFixed(2)}) ${((v / maxSlopeDeg) * 100).toFixed(1)}%`
+  })
+  return `linear-gradient(to right, ${parts.join(', ')})`
+}
+
 /** Legend tick values: 0, 5, 10 … up to the slope limit. */
 export function slopeLegendTicks(maxSlopeDeg: number, step = 5): number[] {
   const ticks: number[] = []
