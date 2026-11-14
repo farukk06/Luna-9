@@ -1,4 +1,3 @@
-import type { LegendEntry } from '../services/data'
 import {
   IMPASSABLE_COLOR,
   ROUGHNESS_STOPS,
@@ -25,21 +24,6 @@ export function SlopeLegend({ maxSlopeDeg }: { maxSlopeDeg: number }) {
         <span className="legend-swatch" style={{ background: IMPASSABLE_COLOR }} />
         <span>&gt; {maxSlopeDeg}°: impassable (route slope limit)</span>
       </div>
-    </div>
-  )
-}
-
-/** Discrete legend read from layers.json, used when the image itself comes from that file set. */
-export function FileLegend({ entries, note }: { entries: LegendEntry[]; note?: string }) {
-  return (
-    <div className="legend">
-      {entries.map((e) => (
-        <div className="legend-row" key={`${e.value}-${e.label}`}>
-          <span className="legend-swatch" style={{ background: e.color }} />
-          <span>{e.label}</span>
-        </div>
-      ))}
-      {note && <p className="legend-note">{note}</p>}
     </div>
   )
 }

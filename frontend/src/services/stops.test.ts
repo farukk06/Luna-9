@@ -56,6 +56,7 @@ describe('parseStops', () => {
 
 describe('placeableStops', () => {
   const grid = createMockGrid()
+  const MOCK_SIZE = { width: 100, height: 100 }
 
   it('hides stops outside the grid or on impassable cells and warns', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -64,7 +65,7 @@ describe('placeableStops', () => {
       parseStop({ ...base, id: 'outside', col: 150 })!,
       parseStop({ ...base, id: 'nodata', col: 99, row: 0 })!, // mock NoData corner
     ]
-    expect(placeableStops(stops, grid, 25).map((s) => s.id)).toEqual(['stop-x'])
+    expect(placeableStops(stops, grid, 25, MOCK_SIZE).map((s) => s.id)).toEqual(['stop-x'])
     expect(warn).toHaveBeenCalledTimes(2)
   })
 
@@ -72,7 +73,14 @@ describe('placeableStops', () => {
     const file = JSON.parse(readFileSync(new URL('../../public/content/stops.json', import.meta.url), 'utf-8')) as unknown
     const stops = parseStops(file)
     expect(stops).toHaveLength(3)
-    expect(placeableStops(stops, grid, 25)).toHaveLength(3)
+    expect(placeableStops(stops, grid, 25, MOCK_SIZE)).toHaveLength(3)
     expect(stops.every(isContentPending)).toBe(true)
+  })
+
+  it('hides all stops when the grid size differs from the one their cells refer to', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const stops = [parseStop(base)!]
+    expect(placeableStops(stops, grid, 25, { width: 400, height: 400 })).toEqual([])
+    expect(warn).toHaveBeenCalledTimes(1)
   })
 })

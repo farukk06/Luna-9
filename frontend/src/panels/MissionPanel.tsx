@@ -2,6 +2,7 @@ import type { Alternatives, Cell, EvaCheck, EvaProfile, Grid } from '../routing/
 import { cellIndex } from '../map/coords'
 import { formatNumber } from '../map/format'
 import RoutesSection from './RoutesSection'
+import ElevationProfile from './ElevationProfile'
 
 export type ClickMode = 'target' | 'habitat'
 
@@ -20,6 +21,7 @@ interface MissionPanelProps {
   clickMode: ClickMode
   onToggleMoveHabitat: () => void
   onClearTarget: () => void
+  onProfileHover: (cell: Cell | null) => void
 }
 
 function CellStats({ cell, grid }: { cell: Cell; grid: Grid }) {
@@ -80,6 +82,16 @@ function MissionPanel(props: MissionPanelProps) {
           evaProfile={routing.evaProfile}
         />
       )}
+
+      <section className="panel-section">
+        <h3>Elevation profile</h3>
+        <ElevationProfile
+          hasTarget={target !== null}
+          computing={routing?.computing ?? false}
+          alternatives={routing?.alternatives ?? null}
+          onHoverCell={props.onProfileHover}
+        />
+      </section>
     </>
   )
 }

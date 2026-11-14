@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { LayerId, LayerInfo } from '../services/data'
-import { FileLegend, RoughnessLegend, RouteLegend, SlopeLegend } from './Legends'
+import { RoughnessLegend, RouteLegend, SlopeLegend } from './Legends'
 
 export interface OverlayState {
   visible: boolean
@@ -10,8 +10,6 @@ export interface OverlayState {
 
 interface LayersPanelProps {
   layers: LayerInfo[]
-  /** True when ortho/slope images are the real PNGs from /public/data. */
-  realImages: boolean
   sources: Record<LayerId, string>
   maxSlopeDeg: number
   slope: OverlayState
@@ -62,12 +60,10 @@ function OverlayControl({ title, state, onChange, source, children }: OverlayCon
 }
 
 function LayersPanel(props: LayersPanelProps) {
-  const { layers, realImages, sources, maxSlopeDeg } = props
+  const { layers, sources, maxSlopeDeg } = props
   const ortho = findLayer(layers, 'ortho')
   const slopeInfo = findLayer(layers, 'slope')
   const roughnessInfo = findLayer(layers, 'roughness')
-  // A real slope.png has its own colours, so its legend must come from layers.json.
-  const fileSlopeLegend = realImages && slopeInfo?.legend?.length ? slopeInfo.legend : null
 
   return (
     <>
@@ -82,11 +78,8 @@ function LayersPanel(props: LayersPanelProps) {
       </section>
 
       <OverlayControl title={slopeInfo?.title ?? 'Slope'} state={props.slope} onChange={props.onSlopeChange} source={sources.slope}>
-        {fileSlopeLegend ? (
-          <FileLegend entries={fileSlopeLegend} note={`Above ${maxSlopeDeg}°: impassable for routing`} />
-        ) : (
-          <SlopeLegend maxSlopeDeg={maxSlopeDeg} />
-        )}
+        {/* The slope image is always drawn from the grid with this scale, so this legend always matches. */}
+        <SlopeLegend maxSlopeDeg={maxSlopeDeg} />
       </OverlayControl>
 
       <OverlayControl

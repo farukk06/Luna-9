@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMockGrid } from '../mocks/mockGrid';
-import { type SourceContext, isValidGrid, layerSourceLabel, parseGridSource } from './data';
+import { type SourceContext, isValidGrid, layerSourceLabel, mockSpecFromSearch, parseGridSource } from './data';
 
 describe('isValidGrid', () => {
   const grid = createMockGrid();
@@ -73,5 +73,15 @@ describe('layerSourceLabel', () => {
 
   it('shows the mock text whenever the grid is mock', () => {
     expect(layerSourceLabel('slope', { ...real, gridSource: 'mock' })).toBe('Mock data – real data pending');
+  });
+});
+
+describe('mockSpecFromSearch', () => {
+  it('forces the 400×400 mock grid only for ?mock=400', () => {
+    expect(mockSpecFromSearch('?mock=400')).toEqual({ cells: 400, cellSize: 5 });
+    expect(mockSpecFromSearch('?foo=1&mock=400')).toEqual({ cells: 400, cellSize: 5 });
+    expect(mockSpecFromSearch('')).toBeNull();
+    expect(mockSpecFromSearch('?mock=100')).toBeNull();
+    expect(mockSpecFromSearch('?mock')).toBeNull();
   });
 });

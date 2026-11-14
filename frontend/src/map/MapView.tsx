@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import Map from 'ol/Map'
 import ImageLayer from 'ol/layer/Image'
 import ImageStatic from 'ol/source/ImageStatic'
 import VectorSource from 'ol/source/Vector'
 import ScaleLine from 'ol/control/ScaleLine'
 import { defaults as defaultControls } from 'ol/control/defaults'
+import { defaults as defaultInteractions } from 'ol/interaction/defaults'
 import 'ol/ol.css'
 import type { Cell, Grid } from '../routing/types'
 import { passabilityIssue } from './cells'
@@ -13,6 +15,7 @@ import { READOUT_HINT, createLocalProjection, createView, gridExtent, readoutTex
 import { createMarkerLayer, updateMarkers } from './markers'
 import { createRouteLayer, updateRoutes, type RouteLine } from './routeLayer'
 import { createStopsLayer, updateStops } from './stopsLayer'
+import { logWhenDrawn, recordMapClick } from './clickTiming'
 import type { Stop } from '../services/stops'
 import type VectorLayer from 'ol/layer/Vector'
 
@@ -33,7 +36,11 @@ interface MapViewProps {
   target: Cell | null
   /** Successful routes to draw; empty when nothing should be drawn. */
   routes: RouteLine[]
+  /** True while the drawn routes belong to the previous habitat/target (new ones are computing). */
+  routesStale: boolean
   pointOfNoReturn: Cell | null
+  /** Cell hovered in the elevation chart, shown as a small temporary marker. */
+  hoverCell: Cell | null
   /** Science stops already checked to be placeable on this grid. */
   stops: Stop[]
   stopsVisible: boolean
@@ -46,10 +53,12 @@ interface MapViewProps {
 }
 
 const NOTICE_MS = 2500
+// Previous routes stay visible but faded while the new ones are computed.
+const STALE_ROUTE_OPACITY = 0.3
 const STOP_HIT_TOLERANCE_PX = 5
 
 function MapView(props: MapViewProps) {
-  const { grid, orthoUrl, overlays, habitat, target, routes, pointOfNoReturn } = props
+  const { grid, orthoUrl, overlays, habitat, target, routes, routesStale, pointOfNoReturn, hoverCell } = props
   const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint } = props
   const { slope, roughness } = overlays
   // Only the URLs rebuild the map; visibility/opacity are applied to the existing layers.
@@ -66,6 +75,8 @@ function MapView(props: MapViewProps) {
   const [routeSource] = useState(() => new VectorSource())
   const [stopsSource] = useState(() => new VectorSource())
   const stopsLayerRef = useRef<VectorLayer | null>(null)
+  const routeLayerRef = useRef<VectorLayer | null>(null)
+  const routesStaleRef = useRef(routesStale)
   const stopsVisibleRef = useRef(stopsVisible)
   const [notice, setNotice] = useState<string | null>(null)
   const noticeTimer = useRef<number | undefined>(undefined)
@@ -81,6 +92,7 @@ function MapView(props: MapViewProps) {
     stopsVisibleRef.current = stopsVisible
     maxSlopeRef.current = maxSlopeDeg
     overlaysRef.current = overlays
+    routesStaleRef.current = routesStale
   })
 
   const showNotice = useCallback((text: string) => {
@@ -92,12 +104,18 @@ function MapView(props: MapViewProps) {
   useEffect(() => () => window.clearTimeout(noticeTimer.current), [])
 
   useEffect(() => {
-    updateMarkers(markerSource, grid, { habitat, target, pointOfNoReturn })
-  }, [markerSource, grid, habitat, target, pointOfNoReturn])
+    updateMarkers(markerSource, grid, { habitat, target, pointOfNoReturn, hover: hoverCell })
+    logWhenDrawn(mapRef.current, 'marker')
+  }, [markerSource, grid, habitat, target, pointOfNoReturn, hoverCell])
 
   useEffect(() => {
     updateRoutes(routeSource, grid, routes)
   }, [routeSource, grid, routes])
+
+  useEffect(() => {
+    routeLayerRef.current?.setOpacity(routesStale ? STALE_ROUTE_OPACITY : 1)
+    if (!routesStale && routes.length > 0) logWhenDrawn(mapRef.current, 'routes')
+  }, [routesStale, routes])
 
   useEffect(() => {
     updateStops(stopsSource, grid, stops)
@@ -139,6 +157,9 @@ function MapView(props: MapViewProps) {
     overlayLayersRef.current = { slope: slopeLayer, roughness: roughnessLayer }
     const stopsLayer = createStopsLayer(stopsSource, stopsVisibleRef.current)
     stopsLayerRef.current = stopsLayer
+    const routeLayer = createRouteLayer(routeSource)
+    routeLayer.setOpacity(routesStaleRef.current ? STALE_ROUTE_OPACITY : 1)
+    routeLayerRef.current = routeLayer
     const map = new Map({
       target: targetRef.current,
       // Draw order, bottom to top: base image → slope → roughness → routes → stops → markers.
@@ -146,12 +167,15 @@ function MapView(props: MapViewProps) {
         ortho,
         slopeLayer,
         roughnessLayer,
-        createRouteLayer(routeSource),
+        routeLayer,
         stopsLayer,
         createMarkerLayer(markerSource),
       ],
       view: createView(grid, projection, extent),
       controls: defaultControls({ attribution: false }).extend([new ScaleLine({ units: 'metric' })]),
+      // A click places the target, so double-click zoom would fight it (two
+      // targets per double click). Zoom buttons and the mouse wheel remain.
+      interactions: defaultInteractions({ doubleClickZoom: false }),
     })
     map.getView().fit(extent, { size: map.getSize(), padding: [24, 24, 24, 24] })
     mapRef.current = map
@@ -173,7 +197,8 @@ function MapView(props: MapViewProps) {
     const resetReadout = () => setReadout(READOUT_HINT)
     element.addEventListener('pointerleave', resetReadout)
 
-    map.on('singleclick', (event) => {
+    // 'click' fires immediately; 'singleclick' waits ~250 ms to rule out a double click.
+    map.on('click', (event) => {
       // A click on a stop opens its card instead of setting a target.
       const stopId = map.forEachFeatureAtPixel(event.pixel, (f) => f.get('stopId') as string | undefined, stopHitOptions)
       if (stopId) {
@@ -185,7 +210,12 @@ function MapView(props: MapViewProps) {
       if (!cell) return // outside the study area: ignore silently
       const issue = passabilityIssue(cell, grid, maxSlopeRef.current)
       if (issue) showNotice(issue)
-      else onCellClickRef.current(cell)
+      else {
+        recordMapClick(event.originalEvent.timeStamp)
+        // Commit the new target (and run the marker effect) right now, so the
+        // marker moves in the next frame instead of after a scheduled render.
+        flushSync(() => onCellClickRef.current(cell))
+      }
     })
 
     // StrictMode mounts effects twice in development: detach and dispose the
@@ -197,6 +227,7 @@ function MapView(props: MapViewProps) {
       mapRef.current = null
       overlayLayersRef.current = {}
       stopsLayerRef.current = null
+      routeLayerRef.current = null
     }
   }, [grid, orthoUrl, slopeUrl, roughnessUrl, markerSource, routeSource, stopsSource, showNotice])
 

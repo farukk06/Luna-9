@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Cell, Grid } from './routing/types'
 import MapView from './map/MapView'
-import { findNearestPassableCell } from './map/cells'
+import { findNearestPassableCell, passabilityIssue } from './map/cells'
 import MissionPanel, { type ClickMode, type RoutingView } from './panels/MissionPanel'
 import LayersPanel, { type OverlayState } from './panels/LayersPanel'
-import { DEFAULT_HABITAT_CELL } from './config/mission'
+import { MISSION_DEFAULTS, STOPS_GRID_SIZE } from './config/mission'
+import { describePosition, gridCenterCell, positionToCell } from './map/positions'
 import {
   type DataSource,
   type LayerId,
@@ -14,6 +15,7 @@ import {
   layerSourceLabel,
   loadGrid,
   loadLayers,
+  mockSpecFromSearch,
 } from './services/data'
 import { DEFAULT_EVA_PROFILE, DEFAULT_OPTIONS } from './services/routing'
 import { useRouteAssessment } from './services/useRouteAssessment'
@@ -38,6 +40,38 @@ function SourceBadge({ source }: { source: DataSource }) {
   return <span className={`source-badge source-badge--${source}`}>{source === 'real' ? 'REAL DATA' : 'MOCK DATA'}</span>
 }
 
+/** The configured demo target if it is usable on this grid; otherwise the app opens without one. */
+function initialTarget(grid: Grid, source: DataSource): Cell | null {
+  const position = MISSION_DEFAULTS[source].target
+  if (!position) return null // none configured (real data until chosen)
+  const cell = positionToCell(position, grid)
+  const issue = cell ? passabilityIssue(cell, grid, MAX_SLOPE_DEG) : 'outside the study area'
+  if (cell && issue === null) return cell
+  console.warn(`Default target ${describePosition(position)} skipped: ${issue}`)
+  return null
+}
+
+/**
+ * The passable cell nearest the configured habitat position, or nearest the
+ * grid centre when none is configured (or it lies outside the study area).
+ */
+function initialHabitat(grid: Grid, source: DataSource): Cell | null {
+  const position = MISSION_DEFAULTS[source].habitat
+  let wanted = position ? positionToCell(position, grid) : null
+  if (position && !wanted) console.warn(`Default habitat ${describePosition(position)} is outside the study area`)
+  wanted ??= gridCenterCell(grid)
+  const cell = findNearestPassableCell(wanted, grid, MAX_SLOPE_DEG)
+  if (!cell) console.warn('Default habitat: no passable cell on this grid')
+  else if (!sameCell(cell, wanted)) {
+    console.warn(`Default habitat (${wanted.col}, ${wanted.row}) not passable, moved to (${cell.col}, ${cell.row})`)
+  }
+  return cell
+}
+
+function sameCell(a: Cell | null, b: Cell | null): boolean {
+  return a === b || (a !== null && b !== null && a.col === b.col && a.row === b.row)
+}
+
 function App() {
   const [data, setData] = useState<LoadedData | null>(null)
   const [habitat, setHabitat] = useState<Cell | null>(null)
@@ -47,10 +81,16 @@ function App() {
   const [roughnessLayer, setRoughnessLayer] = useState<OverlayState>(DEFAULT_ROUGHNESS_LAYER)
   const [stopsVisible, setStopsVisible] = useState(true)
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
+  const [hoverCell, setHoverCell] = useState<Cell | null>(null)
+  // Skip re-renders while the pointer stays on the same path cell.
+  const handleProfileHover = useCallback((cell: Cell | null) => {
+    setHoverCell((prev) => (sameCell(prev, cell) ? prev : cell))
+  }, [])
 
   useEffect(() => {
     let cancelled = false // ignore the result if the component unmounted meanwhile
-    Promise.all([loadGrid(), loadLayers(), loadStops()]).then(([gridResult, layersResult, allStops]) => {
+    const forcedMock = mockSpecFromSearch(window.location.search) // "?mock=400" for performance tests
+    Promise.all([loadGrid(forcedMock), loadLayers(), loadStops()]).then(([gridResult, layersResult, allStops]) => {
       if (cancelled) return
       const { grid, source, sourceInfo } = gridResult
       const ctx = { gridSource: source, gridSourceInfo: sourceInfo, layersSource: layersResult.source, layers: layersResult.layers }
@@ -59,10 +99,10 @@ function App() {
         slope: layerSourceLabel('slope', ctx),
         roughness: layerSourceLabel('roughness', ctx),
       }
-      const stops = placeableStops(allStops, grid, MAX_SLOPE_DEG)
+      const stops = placeableStops(allStops, grid, MAX_SLOPE_DEG, STOPS_GRID_SIZE)
       setData({ grid, source, images: getLayerImageUrls(grid, source), layers: layersResult.layers, sources, stops })
-      // Snap the default habitat to a passable cell, so it also works on the real grid.
-      setHabitat(findNearestPassableCell(DEFAULT_HABITAT_CELL, grid, MAX_SLOPE_DEG))
+      setHabitat(initialHabitat(grid, source))
+      setTarget(initialTarget(grid, source)) // ready-made demo mission
     })
     return () => {
       cancelled = true
@@ -111,7 +151,6 @@ function App() {
         {data ? (
           <LayersPanel
             layers={data.layers}
-            realImages={data.source === 'real'}
             sources={data.sources}
             maxSlopeDeg={MAX_SLOPE_DEG}
             slope={slopeLayer}
@@ -142,7 +181,9 @@ function App() {
             habitat={habitat}
             target={target}
             routes={assessment.routeLines}
+            routesStale={assessment.routesStale}
             pointOfNoReturn={assessment.pointOfNoReturn}
+            hoverCell={hoverCell}
             stops={data.stops}
             stopsVisible={stopsVisible}
             onStopClick={setSelectedStopId}
@@ -151,7 +192,7 @@ function App() {
             hint={clickMode === 'habitat' ? 'Click to place habitat' : undefined}
           />
         ) : (
-          <p className="muted center">Loading data...</p>
+          <p className="muted center">Loading terrain data…</p>
         )}
         {selectedStop && (
           <StopCard
@@ -172,6 +213,7 @@ function App() {
             clickMode={clickMode}
             onToggleMoveHabitat={() => setClickMode((m) => (m === 'habitat' ? 'target' : 'habitat'))}
             onClearTarget={() => setTarget(null)}
+            onProfileHover={handleProfileHover}
           />
         )}
       </aside>

@@ -93,11 +93,24 @@ export function stopCell(stop: Stop): Cell {
   return { col: stop.col, row: stop.row }
 }
 
+export interface GridSize {
+  width: number
+  height: number
+}
+
 /**
- * Keeps only stops that sit on a passable cell of this grid. Stop positions
- * were chosen on one grid and may be invalid on another (e.g. the real one).
+ * Keeps only stops that sit on a passable cell of this grid. Stop cells were
+ * chosen on a grid of size `stopsGrid`; on a grid of another size the same
+ * col/row point somewhere else (e.g. bunched in a corner), so all are hidden.
  */
-export function placeableStops(stops: Stop[], grid: Grid, maxSlopeDeg: number): Stop[] {
+export function placeableStops(stops: Stop[], grid: Grid, maxSlopeDeg: number, stopsGrid: GridSize): Stop[] {
+  if (stops.length > 0 && (grid.width !== stopsGrid.width || grid.height !== stopsGrid.height)) {
+    console.warn(
+      `Science stops hidden: stops.json cells refer to a ${stopsGrid.width}×${stopsGrid.height} grid, ` +
+        `this grid is ${grid.width}×${grid.height}`,
+    )
+    return []
+  }
   return stops.filter((stop) => {
     const outside = stop.col < 0 || stop.col >= grid.width || stop.row < 0 || stop.row >= grid.height
     const issue = outside ? 'outside the grid' : passabilityIssue(stopCell(stop), grid, maxSlopeDeg)

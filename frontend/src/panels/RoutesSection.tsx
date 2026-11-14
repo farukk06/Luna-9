@@ -93,7 +93,7 @@ function RoutesSection({ computing, alternatives, eva, evaProfile }: RoutesSecti
       <h3>Routes</h3>
       <p className="assessment-tag">Preliminary route assessment</p>
       {computing || !alternatives ? (
-        <p className="muted">Computing routes...</p>
+        <p className="muted">Computing routes…</p>
       ) : (
         <RoutesBody alternatives={alternatives} eva={eva} evaProfile={evaProfile} />
       )}
