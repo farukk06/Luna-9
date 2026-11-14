@@ -1,6 +1,9 @@
 import type { Grid } from '../routing/types';
 import { createMockGrid } from '../mocks/mockGrid';
-import { SLOPE_COLOR_STOPS, renderHillshade, renderSlope } from '../mocks/mockImages';
+import { renderHillshade, renderSlope } from '../mocks/mockImages';
+import { slopeColorStops } from '../map/colorScale';
+import { renderRoughness } from '../map/rasterImages';
+import { DEFAULT_OPTIONS } from './routing';
 
 // Data source layer: uses Person 2's files in /public/data when they exist and
 // are valid, otherwise falls back to mock data. Switching to real data needs
@@ -27,9 +30,18 @@ export interface LayerInfo {
 export interface LayerImageUrls {
   ortho: string;
   slope: string;
+  roughness: string;
 }
 
-const MOCK_SOURCE_TEXT = 'Mock data – real data pending';
+/** Text fields of grid.json "source" (CONTRACT Section 3); only what the file actually contains. */
+export interface GridSourceInfo {
+  dem?: string;
+  ortho?: string;
+}
+
+export type LayerId = 'ortho' | 'slope' | 'roughness';
+
+export const MOCK_SOURCE_TEXT = 'Mock data – real data pending';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -68,7 +80,7 @@ export function isValidGrid(value: unknown): value is Grid {
  * The content-type check matters: Vite's dev server answers a missing file
  * with index.html (status 200), which must not be treated as data.
  */
-async function fetchJson(url: string): Promise<unknown> {
+export async function fetchJson(url: string): Promise<unknown> {
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
@@ -80,10 +92,20 @@ async function fetchJson(url: string): Promise<unknown> {
   }
 }
 
-export async function loadGrid(): Promise<{ grid: Grid; source: DataSource }> {
+/** Reads the optional "source" object of grid.json; non-string or empty fields are ignored. */
+export function parseGridSource(raw: unknown): GridSourceInfo {
+  if (!isRecord(raw) || !isRecord(raw.source)) return {};
+  const info: GridSourceInfo = {};
+  const { dem, ortho } = raw.source;
+  if (typeof dem === 'string' && dem.trim()) info.dem = dem.trim();
+  if (typeof ortho === 'string' && ortho.trim()) info.ortho = ortho.trim();
+  return info;
+}
+
+export async function loadGrid(): Promise<{ grid: Grid; source: DataSource; sourceInfo: GridSourceInfo }> {
   const data = await fetchJson('/data/grid.json');
-  if (isValidGrid(data)) return { grid: data, source: 'real' };
-  return { grid: createMockGrid(), source: 'mock' };
+  if (isValidGrid(data)) return { grid: data, source: 'real', sourceInfo: parseGridSource(data) };
+  return { grid: createMockGrid(), source: 'mock', sourceInfo: {} };
 }
 
 function isValidLegendEntry(value: unknown): value is LegendEntry {
@@ -105,7 +127,7 @@ function isValidLayer(value: unknown): value is LayerInfo {
 }
 
 function mockLayers(): LayerInfo[] {
-  const labels = ['0°', '10°', '20°', '30°+'];
+  const stops = slopeColorStops(DEFAULT_OPTIONS.maxSlopeDeg);
   return [
     { id: 'ortho', title: 'Hillshade (mock orthophoto)', file: 'ortho.png', source: MOCK_SOURCE_TEXT },
     {
@@ -114,8 +136,9 @@ function mockLayers(): LayerInfo[] {
       file: 'slope.png',
       source: MOCK_SOURCE_TEXT,
       unit: '°',
-      legend: SLOPE_COLOR_STOPS.map((s, k) => ({ value: s.value, color: s.color, label: labels[k] })),
+      legend: stops.map((s) => ({ value: s.value, color: s.color, label: `${s.value}°` })),
     },
+    { id: 'roughness', title: 'Roughness', file: 'roughness.png', source: MOCK_SOURCE_TEXT },
   ];
 }
 
@@ -127,8 +150,34 @@ export async function loadLayers(): Promise<{ layers: LayerInfo[]; source: DataS
   return { layers: mockLayers(), source: 'mock' };
 }
 
-/** Real data uses Person 2's PNGs; mock data renders images from the grid (browser only). */
+/**
+ * Real data uses Person 2's ortho/slope PNGs; mock data renders them from the
+ * grid. Roughness is always rendered here from grid.roughness (browser only).
+ */
 export function getLayerImageUrls(grid: Grid, source: DataSource): LayerImageUrls {
-  if (source === 'real') return { ortho: '/data/ortho.png', slope: '/data/slope.png' };
-  return { ortho: renderHillshade(grid), slope: renderSlope(grid) };
+  const roughness = renderRoughness(grid);
+  if (source === 'real') return { ortho: '/data/ortho.png', slope: '/data/slope.png', roughness };
+  return { ortho: renderHillshade(grid), slope: renderSlope(grid, DEFAULT_OPTIONS.maxSlopeDeg), roughness };
+}
+
+export interface SourceContext {
+  gridSource: DataSource;
+  gridSourceInfo: GridSourceInfo;
+  layersSource: DataSource;
+  layers: LayerInfo[];
+}
+
+/**
+ * Source label for a layer, taken only from the data files, never invented.
+ * Order: layers.json entry → grid.json "source" (slope and roughness are
+ * derived from the DEM) → "not specified". With a mock grid every image on the
+ * map is mock, so the mock text is shown regardless of layers.json.
+ */
+export function layerSourceLabel(id: LayerId, ctx: SourceContext): string {
+  if (ctx.gridSource === 'mock') return MOCK_SOURCE_TEXT;
+  const fromLayers = ctx.layersSource === 'real' ? ctx.layers.find((l) => l.id === id)?.source.trim() : undefined;
+  if (fromLayers) return fromLayers;
+  if (id === 'ortho' && ctx.gridSourceInfo.ortho) return ctx.gridSourceInfo.ortho;
+  if (id !== 'ortho' && ctx.gridSourceInfo.dem) return `${ctx.gridSourceInfo.dem} (derived)`;
+  return 'not specified';
 }

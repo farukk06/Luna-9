@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMockGrid } from '../mocks/mockGrid';
-import { isValidGrid } from './data';
+import { type SourceContext, isValidGrid, layerSourceLabel, parseGridSource } from './data';
 
 describe('isValidGrid', () => {
   const grid = createMockGrid();
@@ -39,5 +39,39 @@ describe('isValidGrid', () => {
     const roughness: unknown[] = [...grid.roughness];
     roughness[5] = 'x';
     expect(isValidGrid({ ...grid, roughness })).toBe(false);
+  });
+});
+
+describe('parseGridSource', () => {
+  it('reads only string dem/ortho fields', () => {
+    expect(parseGridSource({ source: { dem: ' DEM name ', ortho: 'Ortho name', crs: 'x' } })).toEqual({
+      dem: 'DEM name',
+      ortho: 'Ortho name',
+    });
+    expect(parseGridSource({ source: { dem: 5, ortho: '' } })).toEqual({});
+    expect(parseGridSource({})).toEqual({});
+  });
+});
+
+describe('layerSourceLabel', () => {
+  const real: SourceContext = {
+    gridSource: 'real',
+    gridSourceInfo: { dem: 'DEM from grid.json', ortho: 'Ortho from grid.json' },
+    layersSource: 'real',
+    layers: [{ id: 'slope', title: 'Slope', file: 'slope.png', source: 'Slope from layers.json' }],
+  };
+
+  it('prefers layers.json, then grid.json source', () => {
+    expect(layerSourceLabel('slope', real)).toBe('Slope from layers.json');
+    expect(layerSourceLabel('ortho', real)).toBe('Ortho from grid.json');
+    expect(layerSourceLabel('roughness', real)).toBe('DEM from grid.json (derived)');
+  });
+
+  it('says "not specified" instead of inventing a source', () => {
+    expect(layerSourceLabel('ortho', { ...real, gridSourceInfo: {}, layers: [] })).toBe('not specified');
+  });
+
+  it('shows the mock text whenever the grid is mock', () => {
+    expect(layerSourceLabel('slope', { ...real, gridSource: 'mock' })).toBe('Mock data – real data pending');
   });
 });

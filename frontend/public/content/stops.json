@@ -1,0 +1,32 @@
+[
+  {
+    "id": "stop-a",
+    "name": "Science stop A – content pending",
+    "col": 20,
+    "row": 20,
+    "description": "Placeholder. Scientific content will be provided by the team.",
+    "whyImportant": null,
+    "sourceUrl": null,
+    "photo": null
+  },
+  {
+    "id": "stop-b",
+    "name": "Science stop B – content pending",
+    "col": 78,
+    "row": 25,
+    "description": "Placeholder. Scientific content will be provided by the team.",
+    "whyImportant": null,
+    "sourceUrl": null,
+    "photo": null
+  },
+  {
+    "id": "stop-c",
+    "name": "Science stop C – content pending",
+    "col": 82,
+    "row": 78,
+    "description": "Placeholder. Scientific content will be provided by the team.",
+    "whyImportant": null,
+    "sourceUrl": null,
+    "photo": null
+  }
+]

@@ -55,7 +55,7 @@ describe('findNearestPassableCell', () => {
   it('prefers the straight-line nearest cell over the first ring hit', () => {
     // From (0,0): (3,3) is on ring 3 but 4.24 away; (4,0) is on ring 4 but only 4 away.
     const all = Array.from({ length: 36 }, (_, i) => i)
-    const open = new Set([3 * 6 + 3, 0 * 6 + 4])
+    const open = new Set([3 * 6 + 3, 4]) // cells (3,3) and (4,0)
     const grid = testGrid(6, 6, all.filter((i) => !open.has(i)))
     expect(findNearestPassableCell({ col: 0, row: 0 }, grid, 25)).toEqual({ col: 4, row: 0 })
   })
