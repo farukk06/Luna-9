@@ -34,6 +34,8 @@ interface MapViewProps {
   /** Successful routes to draw; empty when nothing should be drawn. */
   routes: RouteLine[]
   pointOfNoReturn: Cell | null
+  /** Cell hovered in the elevation chart, shown as a small temporary marker. */
+  hoverCell: Cell | null
   /** Science stops already checked to be placeable on this grid. */
   stops: Stop[]
   stopsVisible: boolean
@@ -49,7 +51,7 @@ const NOTICE_MS = 2500
 const STOP_HIT_TOLERANCE_PX = 5
 
 function MapView(props: MapViewProps) {
-  const { grid, orthoUrl, overlays, habitat, target, routes, pointOfNoReturn } = props
+  const { grid, orthoUrl, overlays, habitat, target, routes, pointOfNoReturn, hoverCell } = props
   const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint } = props
   const { slope, roughness } = overlays
   // Only the URLs rebuild the map; visibility/opacity are applied to the existing layers.
@@ -92,8 +94,8 @@ function MapView(props: MapViewProps) {
   useEffect(() => () => window.clearTimeout(noticeTimer.current), [])
 
   useEffect(() => {
-    updateMarkers(markerSource, grid, { habitat, target, pointOfNoReturn })
-  }, [markerSource, grid, habitat, target, pointOfNoReturn])
+    updateMarkers(markerSource, grid, { habitat, target, pointOfNoReturn, hover: hoverCell })
+  }, [markerSource, grid, habitat, target, pointOfNoReturn, hoverCell])
 
   useEffect(() => {
     updateRoutes(routeSource, grid, routes)

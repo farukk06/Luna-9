@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Cell, Grid } from './routing/types'
 import MapView from './map/MapView'
-import { findNearestPassableCell } from './map/cells'
+import { findNearestPassableCell, passabilityIssue } from './map/cells'
 import MissionPanel, { type ClickMode, type RoutingView } from './panels/MissionPanel'
 import LayersPanel, { type OverlayState } from './panels/LayersPanel'
-import { DEFAULT_HABITAT_CELL } from './config/mission'
+import { DEFAULT_HABITAT_CELL, DEFAULT_TARGET_CELL } from './config/mission'
 import {
   type DataSource,
   type LayerId,
@@ -38,6 +38,18 @@ function SourceBadge({ source }: { source: DataSource }) {
   return <span className={`source-badge source-badge--${source}`}>{source === 'real' ? 'REAL DATA' : 'MOCK DATA'}</span>
 }
 
+/** The demo target if it is usable on this grid; otherwise the app opens without one. */
+function initialTarget(grid: Grid): Cell | null {
+  const issue = passabilityIssue(DEFAULT_TARGET_CELL, grid, MAX_SLOPE_DEG)
+  if (issue === null) return DEFAULT_TARGET_CELL
+  console.warn(`Default target (${DEFAULT_TARGET_CELL.col}, ${DEFAULT_TARGET_CELL.row}) skipped: ${issue}`)
+  return null
+}
+
+function sameCell(a: Cell | null, b: Cell | null): boolean {
+  return a === b || (a !== null && b !== null && a.col === b.col && a.row === b.row)
+}
+
 function App() {
   const [data, setData] = useState<LoadedData | null>(null)
   const [habitat, setHabitat] = useState<Cell | null>(null)
@@ -47,6 +59,11 @@ function App() {
   const [roughnessLayer, setRoughnessLayer] = useState<OverlayState>(DEFAULT_ROUGHNESS_LAYER)
   const [stopsVisible, setStopsVisible] = useState(true)
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
+  const [hoverCell, setHoverCell] = useState<Cell | null>(null)
+  // Skip re-renders while the pointer stays on the same path cell.
+  const handleProfileHover = useCallback((cell: Cell | null) => {
+    setHoverCell((prev) => (sameCell(prev, cell) ? prev : cell))
+  }, [])
 
   useEffect(() => {
     let cancelled = false // ignore the result if the component unmounted meanwhile
@@ -63,6 +80,7 @@ function App() {
       setData({ grid, source, images: getLayerImageUrls(grid, source), layers: layersResult.layers, sources, stops })
       // Snap the default habitat to a passable cell, so it also works on the real grid.
       setHabitat(findNearestPassableCell(DEFAULT_HABITAT_CELL, grid, MAX_SLOPE_DEG))
+      setTarget(initialTarget(grid)) // ready-made demo mission
     })
     return () => {
       cancelled = true
@@ -143,6 +161,7 @@ function App() {
             target={target}
             routes={assessment.routeLines}
             pointOfNoReturn={assessment.pointOfNoReturn}
+            hoverCell={hoverCell}
             stops={data.stops}
             stopsVisible={stopsVisible}
             onStopClick={setSelectedStopId}
@@ -172,6 +191,7 @@ function App() {
             clickMode={clickMode}
             onToggleMoveHabitat={() => setClickMode((m) => (m === 'habitat' ? 'target' : 'habitat'))}
             onClearTarget={() => setTarget(null)}
+            onProfileHover={handleProfileHover}
           />
         )}
       </aside>

@@ -167,3 +167,5 @@ data-pipeline/raw/
 .vscode/
 .DS_Store
 Thumbs.db
+
+/data-pipeline/processed/

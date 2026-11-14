@@ -8,7 +8,7 @@ import type { Cell, Grid } from '../routing/types'
 import { MARKER_COLORS } from '../config/routes'
 import { cellToMap } from './coords'
 
-export type MarkerKind = 'habitat' | 'target' | 'pnr'
+export type MarkerKind = 'habitat' | 'target' | 'pnr' | 'hover'
 
 const OUTLINE = '#111316'
 
@@ -43,10 +43,18 @@ function pointOfNoReturnMarker(): Style {
   })
 }
 
+// Small, unlabeled ring: a temporary pointer from the elevation chart, not a place.
+function hoverMarker(): Style {
+  return new Style({
+    image: new Circle({ radius: 5, fill: new Fill({ color: '#ffffff' }), stroke: new Stroke({ color: OUTLINE, width: 2 }) }),
+  })
+}
+
 const STYLES: Record<MarkerKind, Style> = {
   habitat: circleMarker(MARKER_COLORS.habitat, 'Habitat'),
   target: circleMarker(MARKER_COLORS.target, 'Target'),
   pnr: pointOfNoReturnMarker(),
+  hover: hoverMarker(),
 }
 
 function styleFor(feature: FeatureLike): Style {
@@ -67,6 +75,8 @@ export interface MarkerCells {
   habitat: Cell | null
   target: Cell | null
   pointOfNoReturn: Cell | null
+  /** Point under the pointer in the elevation chart. */
+  hover: Cell | null
 }
 
 /** Replaces the markers in the source; the map itself is left untouched. */
@@ -76,6 +86,7 @@ export function updateMarkers(source: VectorSource, grid: Grid, cells: MarkerCel
   if (cells.pointOfNoReturn) features.push(markerFeature('pnr', cells.pointOfNoReturn, grid))
   if (cells.habitat) features.push(markerFeature('habitat', cells.habitat, grid))
   if (cells.target) features.push(markerFeature('target', cells.target, grid))
+  if (cells.hover) features.push(markerFeature('hover', cells.hover, grid)) // on top while hovering
   source.clear()
   source.addFeatures(features)
 }
