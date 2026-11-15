@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Cell, Grid } from './routing/types'
 import MapView from './map/MapView'
+import OverviewMap from './map/OverviewMap'
+import { lonLatToMap } from './map/lonLat'
+import type { MapPoint } from './map/coords'
+import { LANDING_SITE } from './config/landingSite'
 import { findNearestPassableCell, passabilityIssue } from './map/cells'
 import MissionPanel, { type ClickMode, type RoutingView } from './panels/MissionPanel'
 import LayersPanel, { type OverlayState } from './panels/LayersPanel'
@@ -11,6 +15,7 @@ import {
   type LayerId,
   type LayerImageUrls,
   type LayerInfo,
+  type LonLatBounds,
   getLayerImageUrls,
   layerSourceLabel,
   loadGrid,
@@ -48,6 +53,10 @@ interface LoadedData {
   stops: Stop[]
   /** Habitat placed at startup; while it is unmoved, its "Why here?" rationale is shown. */
   initialHabitat: Cell | null
+  /** Approximate study-area lon/lat (real data only); enables the landing site and overview map. */
+  lonLatBounds: LonLatBounds | null
+  /** Perseverance landing site on this map, null when outside or without lon/lat bounds. */
+  landingPoint: MapPoint | null
 }
 
 function SourceBadge({ source }: { source: DataSource }) {
@@ -132,7 +141,9 @@ function App() {
       const stops = placeableStops(stopsFile.stops, grid, MAX_SLOPE_DEG, stopsGrid)
       const startHabitat = initialHabitat(grid, source)
       const images = getLayerImageUrls(grid, source)
-      setData({ grid, source, images, layers: layersResult.layers, sources, stops, initialHabitat: startHabitat })
+      const lonLatBounds = sourceInfo.boundsLonLat ?? null
+      const landingPoint = lonLatBounds ? lonLatToMap(LANDING_SITE.lon, LANDING_SITE.lat, lonLatBounds, grid) : null
+      setData({ grid, source, images, layers: layersResult.layers, sources, stops, initialHabitat: startHabitat, lonLatBounds, landingPoint })
       setHabitat(startHabitat)
       setTarget(initialTarget(grid, source)) // ready-made demo mission
     })
@@ -267,6 +278,7 @@ function App() {
             hint={clickMode === 'habitat' ? `${touch ? 'Tap' : 'Click'} to place habitat` : undefined}
             touch={touch}
             focusedRoute={focusedRoute}
+            landingPoint={data.landingPoint}
             popup={
               selectedStop && !isMobile
                 ? {
@@ -286,6 +298,8 @@ function App() {
         ) : (
           <p className="muted center">Loading terrain data…</p>
         )}
+        {/* Remounted on a layout switch so phones start closed and desktops open. */}
+        {data?.lonLatBounds && <OverviewMap key={isMobile ? 'phone' : 'desktop'} studyBounds={data.lonLatBounds} defaultOpen={!isMobile} />}
       </main>
 
       {/* Phones: the stop card slides up from the bottom instead of covering the small map. */}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMockGrid } from '../mocks/mockGrid';
-import { type SourceContext, isValidGrid, layerSourceLabel, mockSpecFromSearch, parseGridSource } from './data';
+import { type SourceContext, isValidGrid, layerSourceLabel, mockSpecFromSearch, parseGridSource, parseLonLatBounds } from './data';
 
 describe('isValidGrid', () => {
   const grid = createMockGrid();
@@ -83,5 +83,22 @@ describe('mockSpecFromSearch', () => {
     expect(mockSpecFromSearch('')).toBeNull();
     expect(mockSpecFromSearch('?mock=100')).toBeNull();
     expect(mockSpecFromSearch('?mock')).toBeNull();
+  });
+});
+
+describe('parseLonLatBounds', () => {
+  it('accepts [west, south, east, north] and is read from grid.json source', () => {
+    expect(parseLonLatBounds([77.4, 18.4, 77.45, 18.45])).toEqual([77.4, 18.4, 77.45, 18.45]);
+    expect(parseGridSource({ source: { boundsLonLat: [77.4, 18.4, 77.45, 18.45] } })).toEqual({
+      boundsLonLat: [77.4, 18.4, 77.45, 18.45],
+    });
+  });
+
+  it('rejects swapped, incomplete or non-numeric bounds', () => {
+    expect(parseLonLatBounds([77.45, 18.4, 77.4, 18.45])).toBeUndefined();
+    expect(parseLonLatBounds([77.4, 18.4, 77.45])).toBeUndefined();
+    expect(parseLonLatBounds([77.4, '18.4', 77.45, 18.45])).toBeUndefined();
+    expect(parseLonLatBounds([77.4, 18.4, 77.45, 95])).toBeUndefined();
+    expect(parseLonLatBounds(null)).toBeUndefined();
   });
 });

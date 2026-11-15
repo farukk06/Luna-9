@@ -7,6 +7,7 @@ import {
   slopeCssGradient,
   slopeLegendTicks,
 } from '../map/colorScale'
+import { LANDING_LABEL } from '../config/landingSite'
 import { ROUTE_COLORS, ROUTE_KINDS, ROUTE_LABELS, type RouteKind, lineStyleFor } from '../config/routes'
 
 /** Gradient bar with tick labels; colours come from the same scale as the map image. */
@@ -81,7 +82,7 @@ export function RouteSwatch({ kind, recommended }: { kind: RouteKind; recommende
   return <LineSample color={ROUTE_COLORS[kind]} recommended={recommended} />
 }
 
-type MarkerShape = 'habitat' | 'target' | 'diamond' | 'hexagon'
+type MarkerShape = 'habitat' | 'target' | 'diamond' | 'hexagon' | 'star'
 
 /** Small CSS versions of the map symbols (same shapes and colours as map/markers.ts). */
 function MarkerSample({ shape }: { shape: MarkerShape }) {
@@ -123,6 +124,10 @@ export function RouteLegend({ recommended }: { recommended: RouteKind | null }) 
         <div className="legend-row">
           <MarkerSample shape="hexagon" />
           <span>Science stop</span>
+        </div>
+        <div className="legend-row legend-row--wide">
+          <MarkerSample shape="star" />
+          <span>{LANDING_LABEL}</span>
         </div>
       </div>
     </div>
