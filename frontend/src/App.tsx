@@ -19,6 +19,8 @@ import {
 } from './services/data'
 import { DEFAULT_OPTIONS } from './services/routing'
 import { useRouteAssessment } from './services/useRouteAssessment'
+import { useReachability } from './services/useReachability'
+import type { ReachStop } from './services/reachAssess'
 import { useDebouncedValue } from './services/useDebouncedValue'
 import { COARSE_POINTER_QUERY, MOBILE_QUERY, useMediaQuery } from './services/useMediaQuery'
 import { renderSlope } from './map/rasterImages'
@@ -168,6 +170,12 @@ function App() {
     evaProfile: activeScenario.eva,
     maxSlopeDeg: slopeLimit,
   }
+  // Habitat → every stop; independent of the target, so a target click never restarts it.
+  const reachStops = useMemo<ReachStop[]>(
+    () => (data?.stops ?? []).map((s) => ({ id: s.id, name: s.name, cell: stopCell(s) })),
+    [data],
+  )
+  const reach = useReachability(grid, habitat, reachStops, activeScenario)
   // "Why here?" explains the chosen site only: hidden once the habitat is moved elsewhere.
   const habitatRationale =
     data !== null && sameCell(habitat, data.initialHabitat) ? MISSION_DEFAULTS[data.source].habitatRationale : null
@@ -313,6 +321,11 @@ function App() {
             onSelectRoute={toggleRouteSelection}
             onHoverRoute={setHoveredRoute}
             meda={meda}
+            reachability={{ ...reach, maxSlopeDeg: slopeLimit, evaProfile: activeScenario.eva }}
+            onPlanStop={(id) => {
+              const stop = data.stops.find((s) => s.id === id)
+              if (stop) setStopAsTarget(stop)
+            }}
           />
         )}
       </aside>

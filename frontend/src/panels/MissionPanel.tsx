@@ -7,6 +7,7 @@ import ElevationProfile from './ElevationProfile'
 import MissionSummary from './MissionSummary'
 import ScenarioPanel from './ScenarioPanel'
 import ConditionsPanel from './ConditionsPanel'
+import ReachabilitySection, { type ReachabilityView } from './ReachabilitySection'
 import type { MedaFile } from '../services/meda'
 import type { HabitatRationale } from '../config/mission'
 import type { ScenarioParams } from './scenarioParams'
@@ -50,6 +51,9 @@ interface MissionPanelProps {
   onHoverRoute: (kind: RouteKind | null) => void
   /** Valid meda.json, or null: then the conditions panel is not rendered at all. */
   meda: MedaFile | null
+  /** "Where can we go?": habitat → every science stop. */
+  reachability: ReachabilityView
+  onPlanStop: (stopId: string) => void
 }
 
 function CellStats({ cell, grid }: { cell: Cell; grid: Grid }) {
@@ -134,6 +138,14 @@ function MissionPanel(props: MissionPanelProps) {
         blockedContext={blockedContext}
         stops={props.stops}
         mockData={props.mockData}
+      />
+
+      <ReachabilitySection
+        view={props.reachability}
+        hasHabitat={habitat !== null}
+        stopCount={props.stops.length}
+        targetStopId={target ? (props.stops.find((s) => s.col === target.col && s.row === target.row)?.id ?? null) : null}
+        onPlan={props.onPlanStop}
       />
 
       {target && routing && (
