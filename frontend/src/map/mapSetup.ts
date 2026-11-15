@@ -9,6 +9,8 @@ import { formatNumber } from './format'
 // Refresh can hot-reload MapView.tsx (it only works for component-only files).
 
 export const READOUT_HINT = 'Move the pointer over the map'
+/** Phones have no hover: the readout then invites a tap and shows the tapped cell. */
+export const TOUCH_READOUT_HINT = 'Tap the map to set a target'
 
 /** Text for the pointer readout box at map coordinate (x, y). */
 export function readoutText(x: number, y: number, grid: Grid): string {

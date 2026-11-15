@@ -35,6 +35,8 @@ interface MissionPanelProps {
   stops: Stop[]
   mockData: boolean
   habitatPendingReview: boolean
+  /** Phone/touch layout: "Tap" instead of "Click" wording. */
+  touch: boolean
 }
 
 function CellStats({ cell, grid }: { cell: Cell; grid: Grid }) {
@@ -67,7 +69,8 @@ function MissionPanel(props: MissionPanelProps) {
     <>
       <h2>Mission</h2>
 
-      <section className="panel-section">
+      {/* Section classes set the stacked phone order in index.css; desktop keeps this order. */}
+      <section className="panel-section habitat-section">
         <h3>Habitat</h3>
         {habitat ? <CellStats cell={habitat} grid={grid} /> : <p className="muted">No passable cell found for the habitat</p>}
         <button
@@ -80,7 +83,7 @@ function MissionPanel(props: MissionPanelProps) {
         </button>
       </section>
 
-      <section className="panel-section">
+      <section className="panel-section target-section">
         <h3>Target</h3>
         {target ? (
           <>
@@ -90,7 +93,7 @@ function MissionPanel(props: MissionPanelProps) {
             </button>
           </>
         ) : (
-          <p className="muted">Click on the map to set a target</p>
+          <p className="muted">{props.touch ? 'Tap' : 'Click on'} the map to set a target</p>
         )}
       </section>
 
@@ -119,7 +122,7 @@ function MissionPanel(props: MissionPanelProps) {
         />
       )}
 
-      <section className="panel-section">
+      <section className="panel-section profile-section">
         <h3>Elevation profile</h3>
         <ElevationProfile
           hasTarget={target !== null}

@@ -93,7 +93,7 @@ function RoutesBody({ alternatives, eva, evaProfile, blockedContext }: RoutesBod
 
 function RoutesSection({ computing, alternatives, eva, evaProfile, blockedContext }: RoutesSectionProps) {
   return (
-    <section className="panel-section">
+    <section className="panel-section routes-section">
       <h3>Routes</h3>
       <p className="assessment-tag">Preliminary route assessment</p>
       {computing || !alternatives ? (
