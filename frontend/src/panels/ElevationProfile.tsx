@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { Alternatives, Cell } from '../routing/types'
 import { ROUTE_COLORS, ROUTE_LABELS, type RouteKind } from '../config/routes'
+import { RouteSwatch } from './Legends'
 import { formatNumber } from '../map/format'
 import { type ProfileRow, buildProfileRows, elevationExtent, hoverCellForRow, niceScale } from './profileData'
 
@@ -9,11 +10,15 @@ interface ElevationProfileProps {
   hasTarget: boolean
   computing: boolean
   alternatives: Alternatives | null
+  /** Route picked in the route cards; null shows the recommended route. */
+  selectedRoute: RouteKind | null
   /** Reports the path cell under the pointer (null when the pointer leaves the chart). */
   onHoverCell: (cell: Cell | null) => void
 }
 
 const TOOLTIP_MAX_WIDTH_PX = 190
+// Chart chrome in the panel theme (index.css --border, --border-strong, --text-muted).
+const CHART = { grid: '#2a2e35', axis: '#3d434c', text: '#9aa1ab' } as const
 
 interface SeriesInfo {
   kind: RouteKind
@@ -45,11 +50,27 @@ function emptyText(hasTarget: boolean, computing: boolean, alternatives: Alterna
   return null
 }
 
-function ElevationProfile({ hasTarget, computing, alternatives, onHoverCell }: ElevationProfileProps) {
-  const recKind = alternatives?.recommended ?? null
+/**
+ * Main line: the selected route (or the recommended one). Comparison line:
+ * the recommended route when another one is selected, otherwise the shortest
+ * route unless it is the shown one or failed.
+ */
+function chartKinds(alternatives: Alternatives | null, selected: RouteKind | null): { main: RouteKind | null; cmp: RouteKind | null } {
+  const recommended = alternatives?.recommended ?? null
+  if (!alternatives || !recommended) return { main: null, cmp: null }
+  const main = selected && alternatives[selected].ok ? selected : recommended
+  if (main !== recommended) return { main, cmp: recommended }
+  return { main, cmp: main !== 'shortest' && alternatives.shortest.ok ? 'shortest' : null }
+}
+
+const seriesLabel = (kind: RouteKind, alternatives: Alternatives, selected: boolean): string =>
+  `${ROUTE_LABELS[kind]}${kind === alternatives.recommended ? ' (recommended)' : selected ? ' (selected)' : ''}`
+
+function ElevationProfile({ hasTarget, computing, alternatives, selectedRoute, onHoverCell }: ElevationProfileProps) {
+  const { main: recKind, cmp: cmpKind } = chartKinds(alternatives, selectedRoute)
+  // "rec" naming kept from profileData: it is the main (shown) series.
   const rec = recKind && alternatives ? alternatives[recKind] : null
-  // Compare against the shortest route, unless it is the recommended one or failed.
-  const cmp = alternatives && recKind !== 'shortest' && alternatives.shortest.ok ? alternatives.shortest : null
+  const cmp = cmpKind && alternatives ? alternatives[cmpKind] : null
   const rows = useMemo(() => (rec ? buildProfileRows(rec, cmp) : []), [rec, cmp])
   // Round ticks: ~5 distance steps (≥ 50 m) and ~4 elevation steps of at least 5 m.
   const xScale = useMemo(() => niceScale(0, rows[rows.length - 1]?.distanceM ?? 0, 5, 50), [rows])
@@ -62,10 +83,10 @@ function ElevationProfile({ hasTarget, computing, alternatives, onHoverCell }: E
   useEffect(() => () => onHoverCell(null), [rows, onHoverCell])
 
   const empty = emptyText(hasTarget, computing, alternatives)
-  if (empty || !rec || !recKind) return <p className="muted">{empty}</p>
+  if (empty || !rec || !recKind || !alternatives) return <p className="muted">{empty}</p>
 
-  const recInfo: SeriesInfo = { kind: recKind, label: `${ROUTE_LABELS[recKind]} (recommended)` }
-  const cmpInfo: SeriesInfo | null = cmp ? { kind: 'shortest', label: ROUTE_LABELS.shortest } : null
+  const recInfo: SeriesInfo = { kind: recKind, label: seriesLabel(recKind, alternatives, true) }
+  const cmpInfo: SeriesInfo | null = cmp && cmpKind ? { kind: cmpKind, label: seriesLabel(cmpKind, alternatives, false) } : null
 
   return (
     <div className="profile-chart">
@@ -80,7 +101,7 @@ function ElevationProfile({ hasTarget, computing, alternatives, onHoverCell }: E
           }}
           onMouseLeave={() => onHoverCell(null)}
         >
-          <CartesianGrid stroke="#33373e" strokeDasharray="2 4" />
+          <CartesianGrid stroke={CHART.grid} strokeDasharray="2 4" />
           <XAxis
             dataKey="distanceM"
             type="number"
@@ -88,26 +109,26 @@ function ElevationProfile({ hasTarget, computing, alternatives, onHoverCell }: E
             ticks={xScale.ticks}
             allowDataOverflow
             tickFormatter={(v: number) => v.toFixed(0)}
-            tick={{ fill: '#9aa0a8', fontSize: 11 }}
-            stroke="#4a4f57"
+            tick={{ fill: CHART.text, fontSize: 11 }}
+            stroke={CHART.axis}
             height={38} // room for tick labels plus the axis title below them
-            label={{ value: 'Distance (m)', position: 'insideBottom', offset: 0, fill: '#9aa0a8', fontSize: 11 }}
+            label={{ value: 'Distance (m)', position: 'insideBottom', offset: 0, fill: CHART.text, fontSize: 11 }}
           />
           <YAxis
             domain={yScale.domain}
             ticks={yScale.ticks}
             allowDataOverflow
             tickFormatter={(v: number) => formatNumber(v, 0)}
-            tick={{ fill: '#9aa0a8', fontSize: 11 }}
-            stroke="#4a4f57"
+            tick={{ fill: CHART.text, fontSize: 11 }}
+            stroke={CHART.axis}
             width={52}
-            label={{ value: 'Elevation (m)', angle: -90, position: 'insideLeft', fill: '#9aa0a8', fontSize: 11, dy: 40 }}
+            label={{ value: 'Elevation (m)', angle: -90, position: 'insideLeft', fill: CHART.text, fontSize: 11, dy: 40 }}
           />
           <Tooltip
             content={({ payload }) => (
               <ProfileTooltip row={payload?.[0]?.payload as ProfileRow | undefined} rec={recInfo} cmp={cmpInfo} />
             )}
-            cursor={{ stroke: '#9aa0a8', strokeDasharray: '3 3' }}
+            cursor={{ stroke: CHART.text, strokeDasharray: '3 3' }}
             // Keep the box inside the chart: Recharts flips it to the left of the
             // pointer when it would overflow, which only works if it is narrower
             // than the chart, hence the max width (text wraps inside).
@@ -118,8 +139,9 @@ function ElevationProfile({ hasTarget, computing, alternatives, onHoverCell }: E
           {cmpInfo && (
             <Line
               dataKey="cmpElevation"
-              stroke={ROUTE_COLORS.shortest}
+              stroke={ROUTE_COLORS[cmpInfo.kind]}
               strokeWidth={1.5}
+              strokeOpacity={0.8}
               strokeDasharray="5 4"
               dot={false}
               activeDot={{ r: 3 }}
@@ -140,11 +162,11 @@ function ElevationProfile({ hasTarget, computing, alternatives, onHoverCell }: E
       </ResponsiveContainer>
       <div className="profile-legend">
         <span>
-          <span className="route-swatch" style={{ color: ROUTE_COLORS[recKind] }} /> {recInfo.label}
+          <RouteSwatch kind={recKind} recommended /> {recInfo.label}
         </span>
         {cmpInfo && (
           <span>
-            <span className="route-swatch route-swatch--dashed" style={{ color: ROUTE_COLORS.shortest }} /> {cmpInfo.label}
+            <RouteSwatch kind={cmpInfo.kind} recommended={false} /> {cmpInfo.label}
           </span>
         )}
       </div>

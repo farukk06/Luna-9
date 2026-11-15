@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { LayerId, LayerInfo } from '../services/data'
 import { RoughnessLegend, RouteLegend, SlopeLegend } from './Legends'
 import SourceInfo from './SourceInfo'
+import type { RouteKind } from '../config/routes'
 import { layerTitleWithoutLimit } from './sourceText'
 
 export interface OverlayState {
@@ -23,6 +24,8 @@ interface LayersPanelProps {
   onStopsVisibleChange: (visible: boolean) => void
   /** Phone layout: the whole panel folds into a closed-by-default disclosure. */
   collapsible?: boolean
+  /** Recommended route kind, so the legend shows each line as it is drawn now. */
+  recommendedRoute: RouteKind | null
 }
 
 function findLayer(layers: LayerInfo[], id: LayerId): LayerInfo | undefined {
@@ -104,18 +107,18 @@ function LayersPanel(props: LayersPanelProps) {
           <span className="layer-title">Science stops</span>
           <span className="layer-tag">{props.stopCount === 0 ? 'none available' : `${props.stopCount} on map`}</span>
         </label>
-        <p className="layer-source">Click a stop to open its card.</p>
+        <p className="layer-source">Select a stop on the map to open its card.</p>
       </section>
 
       <h2 className="panel-subheading">Routes</h2>
-      <RouteLegend />
+      <RouteLegend recommended={props.recommendedRoute} />
     </>
   )
 
   if (props.collapsible) {
     return (
-      <details className="mobile-collapse">
-        <summary className="mobile-collapse-summary">
+      <details className="collapsible mobile-collapse">
+        <summary className="collapsible-summary">
           <h2>Layers &amp; legends</h2>
         </summary>
         {body}

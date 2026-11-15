@@ -26,7 +26,7 @@ export function recordMapClick(timeStamp: number): void {
 
 /** Call right after updating a layer: logs once, when that frame has been rendered. */
 export function logWhenDrawn(map: Map | null, stage: 'marker' | 'routes'): void {
-  if (!map || clickAt === null || !pending.has(stage)) return
+  if (!import.meta.env.DEV || !map || clickAt === null || !pending.has(stage)) return
   pending.delete(stage)
   const t0 = clickAt
   map.once('postrender', () => log(stage, t0))

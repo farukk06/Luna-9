@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal, flushSync } from 'react-dom'
 import Map from 'ol/Map'
+import Overlay from 'ol/Overlay'
+import type { Positioning } from 'ol/Overlay'
 import ImageLayer from 'ol/layer/Image'
 import ImageStatic from 'ol/source/ImageStatic'
 import VectorSource from 'ol/source/Vector'
@@ -13,11 +15,14 @@ import { passabilityIssue } from './cells'
 import { mapToCell } from './coords'
 import { READOUT_HINT, TOUCH_READOUT_HINT, createLocalProjection, createView, gridExtent, readoutText } from './mapSetup'
 import { createMarkerLayer, updateMarkers } from './markers'
-import { createRouteLayer, updateRoutes, type RouteLine } from './routeLayer'
+import { createRouteLayer, updateRoutes, type RouteLayerHandle, type RouteLine } from './routeLayer'
 import { createStopsLayer, updateStops } from './stopsLayer'
 import { logWhenDrawn, recordMapClick } from './clickTiming'
+import { clearLabelCache } from './mapSymbols'
+import { cellToMap } from './coords'
 import type { Stop } from '../services/stops'
 import type VectorLayer from 'ol/layer/Vector'
+import type { RouteKind } from '../config/routes'
 
 export type OverlayId = 'slope' | 'roughness'
 
@@ -52,16 +57,37 @@ interface MapViewProps {
   hint?: string
   /** Phone/touch layout: tap wording in the readout box. */
   touch?: boolean
+  /** Route hovered or selected in the panel: highlighted, the others faded. */
+  focusedRoute: RouteKind | null
+  /** Card shown next to this stop on the map (desktop); null = no card on the map. */
+  popup: { stop: Stop; content: ReactNode } | null
 }
 
 const NOTICE_MS = 2500
 // Previous routes stay visible but faded while the new ones are computed.
 const STALE_ROUTE_OPACITY = 0.3
 const STOP_HIT_TOLERANCE_PX = 5
+// Gap between a stop symbol and its card.
+const POPUP_OFFSET_PX = 18
+
+/**
+ * Opens the card on the side of the stop with more room (right of a stop in
+ * the left half, and so on); autoPan then nudges the map if it still overflows.
+ */
+function popupPlacement(pixel: number[] | null, size: number[] | undefined): { positioning: Positioning; offset: number[] } {
+  if (!pixel || !size) return { positioning: 'center-left', offset: [POPUP_OFFSET_PX, 0] }
+  const toLeft = pixel[0] > size[0] / 2
+  const vertical = pixel[1] < size[1] / 3 ? 'top' : pixel[1] > (size[1] * 2) / 3 ? 'bottom' : 'center'
+  const verticalOffset = vertical === 'top' ? -24 : vertical === 'bottom' ? 24 : 0
+  return {
+    positioning: `${vertical}-${toLeft ? 'right' : 'left'}` as Positioning,
+    offset: [toLeft ? -POPUP_OFFSET_PX : POPUP_OFFSET_PX, verticalOffset],
+  }
+}
 
 function MapView(props: MapViewProps) {
   const { grid, orthoUrl, overlays, habitat, target, routes, routesStale, pointOfNoReturn, hoverCell } = props
-  const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint, touch = false } = props
+  const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint, touch = false, focusedRoute, popup } = props
   const { slope, roughness } = overlays
   // Only the base/roughness URLs rebuild the map. The slope image changes with
   // the scenario slope limit, so its source is swapped in place (view stays).
@@ -82,7 +108,11 @@ function MapView(props: MapViewProps) {
   const [routeSource] = useState(() => new VectorSource())
   const [stopsSource] = useState(() => new VectorSource())
   const stopsLayerRef = useRef<VectorLayer | null>(null)
-  const routeLayerRef = useRef<VectorLayer | null>(null)
+  const routeLayerRef = useRef<RouteLayerHandle | null>(null)
+  // The stop card is rendered by React (portal) into this element, which an OpenLayers Overlay keeps next to the stop.
+  const [popupElement] = useState(() => document.createElement('div'))
+  const popupOverlayRef = useRef<Overlay | null>(null)
+  const focusedRouteRef = useRef(focusedRoute)
   const routesStaleRef = useRef(routesStale)
   const stopsVisibleRef = useRef(stopsVisible)
   const [notice, setNotice] = useState<string | null>(null)
@@ -101,6 +131,7 @@ function MapView(props: MapViewProps) {
     overlaysRef.current = overlays
     routesStaleRef.current = routesStale
     readoutHintRef.current = readoutHint
+    focusedRouteRef.current = focusedRoute
   })
 
   // The readout is plain DOM text (see setReadout below); swap the hint when
@@ -127,7 +158,11 @@ function MapView(props: MapViewProps) {
   }, [routeSource, grid, routes])
 
   useEffect(() => {
-    routeLayerRef.current?.setOpacity(routesStale ? STALE_ROUTE_OPACITY : 1)
+    routeLayerRef.current?.setFocus(focusedRoute)
+  }, [focusedRoute])
+
+  useEffect(() => {
+    routeLayerRef.current?.layer.setOpacity(routesStale ? STALE_ROUTE_OPACITY : 1)
     if (!routesStale && routes.length > 0) logWhenDrawn(mapRef.current, 'routes')
   }, [routesStale, routes])
 
@@ -180,8 +215,10 @@ function MapView(props: MapViewProps) {
     const stopsLayer = createStopsLayer(stopsSource, stopsVisibleRef.current)
     stopsLayerRef.current = stopsLayer
     const routeLayer = createRouteLayer(routeSource)
-    routeLayer.setOpacity(routesStaleRef.current ? STALE_ROUTE_OPACITY : 1)
+    routeLayer.layer.setOpacity(routesStaleRef.current ? STALE_ROUTE_OPACITY : 1)
+    routeLayer.setFocus(focusedRouteRef.current)
     routeLayerRef.current = routeLayer
+    const markerLayer = createMarkerLayer(markerSource)
     const map = new Map({
       target: targetRef.current,
       // Draw order, bottom to top: base image → slope → roughness → routes → stops → markers.
@@ -189,9 +226,9 @@ function MapView(props: MapViewProps) {
         ortho,
         slopeLayer,
         roughnessLayer,
-        routeLayer,
+        routeLayer.layer,
         stopsLayer,
-        createMarkerLayer(markerSource),
+        markerLayer,
       ],
       view: createView(grid, projection, extent),
       controls: defaultControls({ attribution: false }).extend([new ScaleLine({ units: 'metric' })]),
@@ -201,6 +238,24 @@ function MapView(props: MapViewProps) {
     })
     map.getView().fit(extent, { size: map.getSize(), padding: [24, 24, 24, 24] })
     mapRef.current = map
+
+    const popupOverlay = new Overlay({
+      element: popupElement,
+      autoPan: { margin: 16, animation: { duration: 200 } },
+      stopEvent: true, // clicks and scrolling inside the card never reach the map
+      className: 'ol-overlay-container stop-popup-container',
+    })
+    map.addOverlay(popupOverlay)
+    popupOverlayRef.current = popupOverlay
+
+    // Canvas labels drawn before Inter finished loading used the fallback font.
+    let disposed = false
+    document.fonts?.ready.then(() => {
+      if (disposed) return
+      clearLabelCache()
+      markerLayer.changed()
+      stopsLayer.changed()
+    })
 
     // The readout is written straight to the DOM: pointermove fires many times
     // per second and does not need to re-render the React tree.
@@ -248,7 +303,10 @@ function MapView(props: MapViewProps) {
     // StrictMode mounts effects twice in development: detach and dispose the
     // first map so only one canvas ever lives inside the target element.
     return () => {
+      disposed = true
       element.removeEventListener('pointerleave', resetReadout)
+      map.removeOverlay(popupOverlay)
+      popupOverlayRef.current = null
       map.setTarget(undefined)
       map.dispose()
       mapRef.current = null
@@ -258,7 +316,24 @@ function MapView(props: MapViewProps) {
     }
     // slopeUrl is deliberately missing: overlaysRef holds the current URL for a new map,
     // and the effect above swaps it on an existing one.
-  }, [grid, orthoUrl, roughnessUrl, markerSource, routeSource, stopsSource, showNotice])
+  }, [grid, orthoUrl, roughnessUrl, markerSource, routeSource, stopsSource, showNotice, popupElement])
+
+  // Runs after the map effect above, so a rebuilt map gets the open card back.
+  const popupStop = popup?.stop ?? null
+  useEffect(() => {
+    const overlay = popupOverlayRef.current
+    const map = mapRef.current
+    if (!overlay || !map) return
+    if (!popupStop) {
+      overlay.setPosition(undefined)
+      return
+    }
+    const { x, y } = cellToMap({ col: popupStop.col, row: popupStop.row }, grid)
+    const placement = popupPlacement(map.getPixelFromCoordinate([x, y]), map.getSize())
+    overlay.setPositioning(placement.positioning)
+    overlay.setOffset(placement.offset)
+    overlay.setPosition([x, y])
+  }, [popupStop, grid, orthoUrl, roughnessUrl])
 
   return (
     <div className="map-view">
@@ -271,6 +346,7 @@ function MapView(props: MapViewProps) {
       )}
       {/* Filled by the effects above, never by React children, so DOM writes cannot clash. */}
       <div ref={readoutRef} className="map-readout" />
+      {popup && createPortal(popup.content, popupElement)}
     </div>
   )
 }

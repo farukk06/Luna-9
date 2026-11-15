@@ -4,6 +4,7 @@ import type { Stop } from '../services/stops'
 import { ROUTE_LABELS } from '../config/routes'
 import { type BlockedContext, evaDisplay } from './routeAssessment'
 import RouteFailure from './RouteFailure'
+import { RouteSwatch } from './Legends'
 import { NEAR_ROUTE_M, evaMargin, missionWarnings, stopsNearRoute } from './missionBriefing'
 
 interface MissionSummaryProps {
@@ -51,9 +52,11 @@ function Briefing(props: MissionSummaryProps & { alternatives: Alternatives }) {
   const shown = eva ? evaDisplay(eva) : null
   return (
     <>
-      <dl className="stats">
+      <dl className="stats stats--summary">
         <dt>Route</dt>
-        <dd>{ROUTE_LABELS[kind]} (recommended)</dd>
+        <dd className="summary-route">
+          <RouteSwatch kind={kind} recommended /> {ROUTE_LABELS[kind]} (recommended)
+        </dd>
         <dt>Distance</dt>
         <dd>{route.distanceM.toFixed(0)} m</dd>
         {shown && eva && (
@@ -104,8 +107,10 @@ function MissionSummary(props: MissionSummaryProps) {
   else body = <Briefing {...props} alternatives={alternatives} />
   return (
     <section className="panel-section mission-summary">
-      <h3>Mission summary</h3>
-      <p className="assessment-tag">Preliminary route assessment</p>
+      <div className="section-head">
+        <h3>Mission summary</h3>
+        <span className="badge badge--assessment">Preliminary route assessment</span>
+      </div>
       {body}
     </section>
   )

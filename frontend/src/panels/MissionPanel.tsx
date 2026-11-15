@@ -6,7 +6,10 @@ import RoutesSection from './RoutesSection'
 import ElevationProfile from './ElevationProfile'
 import MissionSummary from './MissionSummary'
 import ScenarioPanel from './ScenarioPanel'
+import ConditionsPanel from './ConditionsPanel'
+import type { MedaFile } from '../services/meda'
 import type { ScenarioParams } from './scenarioParams'
+import type { RouteKind } from '../config/routes'
 
 export type ClickMode = 'target' | 'habitat'
 
@@ -37,17 +40,25 @@ interface MissionPanelProps {
   habitatPendingReview: boolean
   /** Phone/touch layout: "Tap" instead of "Click" wording. */
   touch: boolean
+  /** Route kept selected by a card click (null = the recommended route is shown). */
+  selectedRoute: RouteKind | null
+  /** Route highlighted on the map right now (hovered card, else the selected one). */
+  focusedRoute: RouteKind | null
+  onSelectRoute: (kind: RouteKind) => void
+  onHoverRoute: (kind: RouteKind | null) => void
+  /** Valid meda.json, or null: then the conditions panel is not rendered at all. */
+  meda: MedaFile | null
 }
 
 function CellStats({ cell, grid }: { cell: Cell; grid: Grid }) {
   const i = cellIndex(cell, grid)
   return (
-    <dl className="stats">
+    <dl className="stats stats--compact">
       <dt>Cell</dt>
       <dd>
         ({cell.col}, {cell.row})
       </dd>
-      <dt>Elevation</dt>
+      <dt>Elev.</dt>
       <dd>{formatNumber(grid.elevation[i], 1)} m</dd>
       <dt>Slope</dt>
       <dd>{formatNumber(grid.slope[i], 1)}°</dd>
@@ -70,31 +81,38 @@ function MissionPanel(props: MissionPanelProps) {
       <h2>Mission</h2>
 
       {/* Section classes set the stacked phone order in index.css; desktop keeps this order. */}
-      <section className="panel-section habitat-section">
-        <h3>Habitat</h3>
-        {habitat ? <CellStats cell={habitat} grid={grid} /> : <p className="muted">No passable cell found for the habitat</p>}
-        <button
-          type="button"
-          className={`btn${placingHabitat ? ' btn--active' : ''}`}
-          aria-pressed={placingHabitat}
-          onClick={props.onToggleMoveHabitat}
-        >
-          {placingHabitat ? 'Cancel move' : 'Move habitat'}
-        </button>
-      </section>
-
-      <section className="panel-section target-section">
-        <h3>Target</h3>
-        {target ? (
-          <>
-            <CellStats cell={target} grid={grid} />
-            <button type="button" className="btn" onClick={props.onClearTarget}>
-              Clear target
-            </button>
-          </>
-        ) : (
-          <p className="muted">{props.touch ? 'Tap' : 'Click on'} the map to set a target</p>
-        )}
+      <section className="panel-section waypoints-section" aria-label="Habitat and target">
+        <div className="waypoint">
+          <div className="waypoint-head">
+            <span className="waypoint-dot waypoint-dot--habitat" aria-hidden="true" />
+            <h3>Habitat</h3>
+          </div>
+          {habitat ? <CellStats cell={habitat} grid={grid} /> : <p className="muted small">No passable cell found</p>}
+          <button
+            type="button"
+            className={`btn btn--small${placingHabitat ? ' btn--active' : ''}`}
+            aria-pressed={placingHabitat}
+            onClick={props.onToggleMoveHabitat}
+          >
+            {placingHabitat ? 'Cancel move' : 'Move habitat'}
+          </button>
+        </div>
+        <div className="waypoint">
+          <div className="waypoint-head">
+            <span className="waypoint-dot waypoint-dot--target" aria-hidden="true" />
+            <h3>Science target</h3>
+          </div>
+          {target ? (
+            <>
+              <CellStats cell={target} grid={grid} />
+              <button type="button" className="btn btn--small" onClick={props.onClearTarget}>
+                Clear target
+              </button>
+            </>
+          ) : (
+            <p className="muted small">{props.touch ? 'Tap' : 'Click on'} the map to set a target</p>
+          )}
+        </div>
       </section>
 
       <MissionSummary
@@ -110,8 +128,6 @@ function MissionPanel(props: MissionPanelProps) {
         habitatPendingReview={props.habitatPendingReview}
       />
 
-      <ScenarioPanel params={props.scenario} onChange={props.onScenarioChange} onReset={props.onScenarioReset} />
-
       {target && routing && (
         <RoutesSection
           computing={routing.computing}
@@ -119,18 +135,29 @@ function MissionPanel(props: MissionPanelProps) {
           eva={routing.eva}
           evaProfile={routing.evaProfile}
           blockedContext={blockedContext}
+          selectedRoute={props.selectedRoute}
+          focusedRoute={props.focusedRoute}
+          onSelectRoute={props.onSelectRoute}
+          onHoverRoute={props.onHoverRoute}
         />
       )}
 
-      <section className="panel-section profile-section">
-        <h3>Elevation profile</h3>
+      <details className="panel-section collapsible profile-section" open>
+        <summary className="collapsible-summary">
+          <h3>Elevation profile</h3>
+        </summary>
         <ElevationProfile
           hasTarget={target !== null}
           computing={routing?.computing ?? false}
           alternatives={routing?.alternatives ?? null}
+          selectedRoute={props.selectedRoute}
           onHoverCell={props.onProfileHover}
         />
-      </section>
+      </details>
+
+      {props.meda && <ConditionsPanel meda={props.meda} />}
+
+      <ScenarioPanel params={props.scenario} onChange={props.onScenarioChange} onReset={props.onScenarioReset} />
     </>
   )
 }

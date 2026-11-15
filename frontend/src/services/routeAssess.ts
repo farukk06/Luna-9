@@ -32,9 +32,12 @@ export function assessRoutes(
   const elapsedMs = performance.now() - start
   const rec = alternatives.recommended
   const eva = rec ? checkEva(alternatives[rec], params.eva) : null
-  console.info(
-    `findAlternatives: ${elapsedMs.toFixed(0)} ms on ${grid.width}×${grid.height} grid ` +
-      `(${habitat.col},${habitat.row}) → (${target.col},${target.row}) [${where}]`,
-  )
+  // Timing diagnostics only while developing; production consoles stay quiet.
+  if (import.meta.env.DEV) {
+    console.info(
+      `findAlternatives: ${elapsedMs.toFixed(0)} ms on ${grid.width}×${grid.height} grid ` +
+        `(${habitat.col},${habitat.row}) → (${target.col},${target.row}) [${where}]`,
+    )
+  }
   return { alternatives, eva, elapsedMs }
 }
