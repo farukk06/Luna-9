@@ -2,7 +2,7 @@ import type { Grid } from '../routing/types';
 import { LARGE_MOCK_SPEC, type MockGridSpec, createMockGrid } from '../mocks/mockGrid';
 import { renderHillshade } from '../mocks/mockImages';
 import { slopeColorStops } from '../map/colorScale';
-import { renderRoughness, renderSlope } from '../map/rasterImages';
+import { renderRoughness } from '../map/rasterImages';
 import { DEFAULT_OPTIONS } from './routing';
 
 // Data source layer: uses Person 2's files in /public/data when they exist and
@@ -27,9 +27,9 @@ export interface LayerInfo {
   legend?: LegendEntry[];
 }
 
+/** The slope image is not here: it depends on the scenario slope limit, so App renders it (map/rasterImages). */
 export interface LayerImageUrls {
   ortho: string;
-  slope: string;
   roughness: string;
 }
 
@@ -37,6 +37,20 @@ export interface LayerImageUrls {
 export interface GridSourceInfo {
   dem?: string;
   ortho?: string;
+  /** Approximate [west, south, east, north] in degrees; only for context maps. */
+  boundsLonLat?: LonLatBounds;
+}
+
+/** [west, south, east, north] in degrees (CONTRACT Section 3, source.boundsLonLat). */
+export type LonLatBounds = [number, number, number, number];
+
+/** Four finite numbers with west < east and south < north, inside lon/lat ranges; otherwise undefined. */
+export function parseLonLatBounds(value: unknown): LonLatBounds | undefined {
+  if (!Array.isArray(value) || value.length !== 4) return undefined;
+  if (!value.every((v) => typeof v === 'number' && Number.isFinite(v))) return undefined;
+  const [west, south, east, north] = value as LonLatBounds;
+  if (west >= east || south >= north || south < -90 || north > 90 || west < -180 || east > 360) return undefined;
+  return [west, south, east, north];
 }
 
 export type LayerId = 'ortho' | 'slope' | 'roughness';
@@ -96,9 +110,11 @@ export async function fetchJson(url: string): Promise<unknown> {
 export function parseGridSource(raw: unknown): GridSourceInfo {
   if (!isRecord(raw) || !isRecord(raw.source)) return {};
   const info: GridSourceInfo = {};
-  const { dem, ortho } = raw.source;
+  const { dem, ortho, boundsLonLat } = raw.source;
   if (typeof dem === 'string' && dem.trim()) info.dem = dem.trim();
   if (typeof ortho === 'string' && ortho.trim()) info.ortho = ortho.trim();
+  const bounds = parseLonLatBounds(boundsLonLat);
+  if (bounds) info.boundsLonLat = bounds;
   return info;
 }
 
@@ -176,7 +192,6 @@ export const REAL_ORTHO_URL = '/data/ortho.png';
 export function getLayerImageUrls(grid: Grid, source: DataSource): LayerImageUrls {
   return {
     ortho: source === 'real' ? REAL_ORTHO_URL : renderHillshade(grid),
-    slope: renderSlope(grid, DEFAULT_OPTIONS.maxSlopeDeg),
     roughness: renderRoughness(grid),
   };
 }

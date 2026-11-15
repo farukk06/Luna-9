@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import type { LayerId, LayerInfo } from '../services/data'
 import { RoughnessLegend, RouteLegend, SlopeLegend } from './Legends'
 import SourceInfo from './SourceInfo'
+import type { RouteKind } from '../config/routes'
+import { layerTitleWithoutLimit } from './sourceText'
 
 export interface OverlayState {
   visible: boolean
@@ -20,6 +22,10 @@ interface LayersPanelProps {
   stopCount: number
   stopsVisible: boolean
   onStopsVisibleChange: (visible: boolean) => void
+  /** Phone layout: the whole panel folds into a closed-by-default disclosure. */
+  collapsible?: boolean
+  /** Recommended route kind, so the legend shows each line as it is drawn now. */
+  recommendedRoute: RouteKind | null
 }
 
 function findLayer(layers: LayerInfo[], id: LayerId): LayerInfo | undefined {
@@ -66,10 +72,8 @@ function LayersPanel(props: LayersPanelProps) {
   const slopeInfo = findLayer(layers, 'slope')
   const roughnessInfo = findLayer(layers, 'roughness')
 
-  return (
+  const body = (
     <>
-      <h2>Layers</h2>
-
       <section className="layer-item">
         <div className="layer-row">
           <span className="layer-title">{ortho?.title ?? 'Base image'}</span>
@@ -78,7 +82,8 @@ function LayersPanel(props: LayersPanelProps) {
         <SourceInfo text={sources.ortho} />
       </section>
 
-      <OverlayControl title={slopeInfo?.title ?? 'Slope'} state={props.slope} onChange={props.onSlopeChange} source={sources.slope}>
+      <OverlayControl
+        title={slopeInfo ? layerTitleWithoutLimit(slopeInfo.title) : 'Slope'} state={props.slope} onChange={props.onSlopeChange} source={sources.slope}>
         {/* The slope image is always drawn from the grid with this scale, so this legend always matches. */}
         <SlopeLegend maxSlopeDeg={maxSlopeDeg} />
       </OverlayControl>
@@ -102,11 +107,28 @@ function LayersPanel(props: LayersPanelProps) {
           <span className="layer-title">Science stops</span>
           <span className="layer-tag">{props.stopCount === 0 ? 'none available' : `${props.stopCount} on map`}</span>
         </label>
-        <p className="layer-source">Click a stop to open its card.</p>
+        <p className="layer-source">Select a stop on the map to open its card.</p>
       </section>
 
       <h2 className="panel-subheading">Routes</h2>
-      <RouteLegend />
+      <RouteLegend recommended={props.recommendedRoute} />
+    </>
+  )
+
+  if (props.collapsible) {
+    return (
+      <details className="collapsible mobile-collapse">
+        <summary className="collapsible-summary">
+          <h2>Layers &amp; legends</h2>
+        </summary>
+        {body}
+      </details>
+    )
+  }
+  return (
+    <>
+      <h2>Layers</h2>
+      {body}
     </>
   )
 }

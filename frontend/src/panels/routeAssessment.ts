@@ -1,4 +1,5 @@
-import type { Alternatives, EvaCheck, RouteResult } from '../routing/types'
+import type { Alternatives, Cell, EvaCheck, Grid, RouteResult } from '../routing/types'
+import { cellIndex } from '../map/coords'
 import { ROUTE_KINDS, ROUTE_LABELS, type RouteKind } from '../config/routes'
 
 // Turns the engine's alternatives into user-facing text. The engine's own
@@ -17,6 +18,40 @@ export const ROUTE_FAILURE_MESSAGES: Record<FailureReason, string> = {
 
 export function failureMessage(route: RouteResult): string {
   return ROUTE_FAILURE_MESSAGES[route.reason ?? 'invalid-input']
+}
+
+/** Reason of the first failed route (same order as firstFailureMessage), or null if none failed. */
+export function firstFailureReason(alt: Alternatives): FailureReason | null {
+  const failed = ROUTE_KINDS.find((kind) => !alt[kind].ok)
+  return failed ? (alt[failed].reason ?? 'invalid-input') : null
+}
+
+/** What the routes were computed for, needed to explain a blocked habitat/target cell. */
+export interface BlockedContext {
+  grid: Grid
+  habitat: Cell | null
+  target: Cell | null
+  maxSlopeDeg: number
+}
+
+/**
+ * Second line under the CONTRACT message for start-blocked / goal-blocked:
+ * why the cell is not passable (NoData or slope above the scenario limit).
+ * Null for other reasons, or when the cell does not explain it.
+ */
+export function blockedCellDetail(reason: FailureReason | null, ctx: BlockedContext): string | null {
+  if (reason !== 'start-blocked' && reason !== 'goal-blocked') return null
+  const cell = reason === 'start-blocked' ? ctx.habitat : ctx.target
+  const { grid } = ctx
+  if (!cell || cell.col < 0 || cell.row < 0 || cell.col >= grid.width || cell.row >= grid.height) return null
+  const i = cellIndex(cell, grid)
+  const slope = grid.slope[i]
+  if (grid.elevation[i] === grid.nodata || slope === grid.nodata) return 'No terrain data at this point.'
+  if (slope > ctx.maxSlopeDeg) {
+    const who = reason === 'start-blocked' ? 'Habitat' : 'Target'
+    return `${who} slope ${slope.toFixed(1)}° exceeds the ${ctx.maxSlopeDeg}° scenario limit.`
+  }
+  return null
 }
 
 /** Message for the first failed route (in shortest → safest → balanced order), or null if none failed. */
@@ -83,14 +118,23 @@ export interface EvaDisplay {
 
 const round1 = (v: number) => Math.round(v * 10) / 10
 
+function evaParts(eva: EvaCheck): number[] {
+  return [eva.outboundMin, eva.researchMin, eva.returnMin].map(round1)
+}
+
+/** Sum of the one-decimal parts shown on screen (rounded again to drop float noise). */
+export function displayedTotalMin(eva: EvaCheck): number {
+  return round1(evaParts(eva).reduce((s, v) => s + v, 0))
+}
+
 /**
  * EVA minutes with one decimal, like the route cards. The shown total is the
  * sum of the shown parts, so "a + b + c = total" always adds up on screen
  * (it can differ from the exact total by at most 0.15 min).
  */
 export function evaDisplay(eva: EvaCheck): EvaDisplay {
-  const parts = [eva.outboundMin, eva.researchMin, eva.returnMin].map(round1)
-  const total = parts.reduce((s, v) => s + v, 0)
+  const parts = evaParts(eva)
+  const total = displayedTotalMin(eva)
   return {
     outbound: parts[0].toFixed(1),
     research: parts[1].toFixed(1),

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Alternatives, Cell, EvaCheck, Grid } from '../routing/types'
 import { ROUTE_KINDS } from '../config/routes'
 import type { RouteLine } from '../map/routeLayer'
-import { assessRoutes } from './routeAssess'
+import { type AssessParams, assessRoutes } from './routeAssess'
 import type { WorkerRequest, WorkerResponse } from './routeWorkerProtocol'
 
 interface StoredResult {
@@ -22,13 +22,14 @@ export interface RouteAssessment {
    * While computing, these are the previous result's routes (see routesStale).
    */
   routeLines: RouteLine[]
-  /** True when routeLines belong to the previous habitat/target: draw them faded. */
+  /** True when routeLines belong to the previous inputs (habitat/target/scenario): draw them faded. */
   routesStale: boolean
   pointOfNoReturn: Cell | null
 }
 
-function inputKey(habitat: Cell, target: Cell): string {
-  return `${habitat.col},${habitat.row}>${target.col},${target.row}`
+/** Cells and scenario parameters together: a result only matches the exact inputs it was computed for. */
+function inputKey(habitat: Cell, target: Cell, params: AssessParams): string {
+  return `${habitat.col},${habitat.row}>${target.col},${target.row}|${JSON.stringify(params)}`
 }
 
 function toRouteLines(alt: Alternatives | null): RouteLine[] {
@@ -61,20 +62,26 @@ function post(worker: Worker, message: WorkerRequest): void {
 }
 
 /**
- * Runs findAlternatives + checkEva for the current habitat/target.
+ * Runs findAlternatives + checkEva for the current habitat/target and
+ * scenario parameters (the caller debounces slider changes).
  * Three A* searches on the 400×400 grid take up to ~300 ms, so they run in a
  * Web Worker and the UI keeps responding ("Computing routes…" meanwhile).
  * Every request gets an id; only the answer to the newest one is kept, so a
  * slow, outdated result can never overwrite a newer route. If the worker
  * cannot start or fails, the same computation runs on the main thread.
  */
-export function useRouteAssessment(grid: Grid | null, habitat: Cell | null, target: Cell | null): RouteAssessment {
+export function useRouteAssessment(
+  grid: Grid | null,
+  habitat: Cell | null,
+  target: Cell | null,
+  params: AssessParams,
+): RouteAssessment {
   const [stored, setStored] = useState<StoredResult | null>(null)
   const [workerFailed, setWorkerFailed] = useState(false)
   const workerRef = useRef<Worker | null>(null)
   const nextIdRef = useRef(0)
   const latestRef = useRef<{ id: number; key: string } | null>(null)
-  const key = grid && habitat && target ? inputKey(habitat, target) : null
+  const key = grid && habitat && target ? inputKey(habitat, target, params) : null
 
   // One worker per grid: the grid is copied to it once, requests carry only cells.
   useEffect(() => {
@@ -111,7 +118,7 @@ export function useRouteAssessment(grid: Grid | null, habitat: Cell | null, targ
     latestRef.current = { id, key }
     const worker = workerRef.current
     if (worker) {
-      post(worker, { type: 'assess', id, habitat, target })
+      post(worker, { type: 'assess', id, habitat, target, params })
       return
     }
     // Fallback: requestAnimationFrame lets the browser paint "Computing routes…"
@@ -119,7 +126,7 @@ export function useRouteAssessment(grid: Grid | null, habitat: Cell | null, targ
     let timer = 0
     const frame = requestAnimationFrame(() => {
       timer = window.setTimeout(() => {
-        const result = assessRoutes(grid, habitat, target, 'main thread')
+        const result = assessRoutes(grid, habitat, target, params, 'main thread')
         setStored({ grid, key, alternatives: result.alternatives, eva: result.eva })
       }, 0)
     })
@@ -127,7 +134,7 @@ export function useRouteAssessment(grid: Grid | null, habitat: Cell | null, targ
       cancelAnimationFrame(frame)
       window.clearTimeout(timer)
     }
-  }, [grid, habitat, target, key, workerFailed])
+  }, [grid, habitat, target, params, key, workerFailed])
 
   const current = stored && stored.key === key && stored.grid === grid ? stored : null
   // While a new result is computing, the previous one (same grid) stays on the

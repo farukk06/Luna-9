@@ -1,0 +1,12 @@
+{
+  "image": "jezero_overview.jpg",
+  "boundsLonLat": [75.9375, 16.875, 78.75, 19.6875],
+  "layer": "Mars_Viking_MDIM21_ClrMosaic_global_232m",
+  "service": "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/WMTSCapabilities.xml",
+  "tileMatrixSet": "default028mm",
+  "tileMatrix": 7,
+  "tiles": "rows 50-51, cols 182-183 (256 px each, 1.40625 deg per tile), mosaicked (512×512 px) without resampling",
+  "crs": "equirectangular lon/lat degrees (urn:ogc:def:crs:EPSG::104905)",
+  "retrieved": "2026-11-15",
+  "credit": "Viking MDIM 2.1 colorized global mosaic – NASA/JPL/USGS (USGS Astrogeology, NASA Ames), via NASA Mars Trek"
+}

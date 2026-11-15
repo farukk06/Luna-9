@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import type { Alternatives, RouteResult } from '../routing/types'
-import { evaDisplay, firstFailureMessage, orderedRouteKinds, recommendationSentence } from './routeAssessment'
+import type { Alternatives, Grid, RouteResult } from '../routing/types'
+import {
+  type BlockedContext,
+  blockedCellDetail,
+  evaDisplay,
+  firstFailureMessage,
+  firstFailureReason,
+  orderedRouteKinds,
+  recommendationSentence,
+} from './routeAssessment'
 
 function route(distanceM: number, maxSlopeDeg: number, meanSlopeDeg: number): RouteResult {
   return {
@@ -111,5 +119,52 @@ describe('evaDisplay', () => {
       withinLimit: true,
     })
     expect(shown.total).toBe('30.3')
+  })
+})
+
+describe('blockedCellDetail', () => {
+  // 3×1 grid: col 0 flat, col 1 at 10.8°, col 2 NoData.
+  const grid: Grid = {
+    version: 1,
+    width: 3,
+    height: 1,
+    cellSize: 5,
+    nodata: -9999,
+    elevation: [0, 0, -9999],
+    slope: [1, 10.8, -9999],
+    roughness: [0, 0, -9999],
+    stats: { elevationMin: 0, elevationMax: 0, slopeMax: 10.8, roughnessP95: 0 },
+  }
+  const ctx = (habitat: number, target: number, maxSlopeDeg = 10): BlockedContext => ({
+    grid,
+    habitat: { col: habitat, row: 0 },
+    target: { col: target, row: 0 },
+    maxSlopeDeg,
+  })
+
+  it('explains a target steeper than the scenario limit', () => {
+    expect(blockedCellDetail('goal-blocked', ctx(0, 1))).toBe('Target slope 10.8° exceeds the 10° scenario limit.')
+  })
+
+  it('explains a habitat steeper than the scenario limit', () => {
+    expect(blockedCellDetail('start-blocked', ctx(1, 0))).toBe('Habitat slope 10.8° exceeds the 10° scenario limit.')
+  })
+
+  it('explains a NoData cell', () => {
+    expect(blockedCellDetail('goal-blocked', ctx(0, 2))).toBe('No terrain data at this point.')
+    expect(blockedCellDetail('start-blocked', ctx(2, 0))).toBe('No terrain data at this point.')
+  })
+
+  it('adds nothing for other reasons or when the cell does not explain it', () => {
+    expect(blockedCellDetail('unreachable', ctx(0, 1))).toBeNull()
+    expect(blockedCellDetail(null, ctx(0, 1))).toBeNull()
+    expect(blockedCellDetail('goal-blocked', ctx(0, 1, 15))).toBeNull()
+    expect(blockedCellDetail('goal-blocked', { ...ctx(0, 1), target: null })).toBeNull()
+  })
+
+  it('reads the reason of the first failed route, keeping the CONTRACT message', () => {
+    const alt = alternatives({ shortest: failed('goal-blocked'), safest: failed('goal-blocked'), balanced: failed('goal-blocked'), recommended: null })
+    expect(firstFailureReason(alt)).toBe('goal-blocked')
+    expect(firstFailureMessage(alt)).toBe('Target cell is not passable')
   })
 })

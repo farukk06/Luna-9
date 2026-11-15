@@ -1,5 +1,5 @@
 import type { Cell, Grid } from '../routing/types'
-import { assessRoutes } from './routeAssess'
+import { type AssessParams, assessRoutes } from './routeAssess'
 import type { WorkerRequest, WorkerResponse } from './routeWorkerProtocol'
 
 // Web Worker: runs the A* searches off the main thread, so the map and panels
@@ -14,7 +14,7 @@ interface WorkerScope {
 const scope = self as unknown as WorkerScope
 
 let grid: Grid | null = null
-let pending: { id: number; habitat: Cell; target: Cell } | null = null
+let pending: { id: number; habitat: Cell; target: Cell; params: AssessParams } | null = null
 let scheduled = false
 
 /**
@@ -28,7 +28,7 @@ function runPending(): void {
   pending = null
   if (!request || !grid) return
   try {
-    const result = assessRoutes(grid, request.habitat, request.target, 'worker')
+    const result = assessRoutes(grid, request.habitat, request.target, request.params, 'worker')
     scope.postMessage({ type: 'result', id: request.id, ...result })
   } catch (error) {
     scope.postMessage({ type: 'error', id: request.id, message: error instanceof Error ? error.message : String(error) })
@@ -41,7 +41,7 @@ scope.onmessage = (event) => {
     grid = message.grid
     return
   }
-  pending = { id: message.id, habitat: message.habitat, target: message.target }
+  pending = { id: message.id, habitat: message.habitat, target: message.target, params: message.params }
   if (!scheduled) {
     scheduled = true
     setTimeout(runPending, 0)

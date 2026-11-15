@@ -1,4 +1,8 @@
-# CONTRACT.md — MarsPath veri ve arayüz sözleşmesi (v3)
+# CONTRACT.md — MarsPath veri ve arayüz sözleşmesi (v3.2)
+
+> **v3.2: Section 8 stops reference image.** `stops.json` artık `{ gridSize, stops }` nesnesi; her durakta `atLocation` (haritadaki noktada ne var) ve `reference` (başka yerde çekilmiş, benzer jeolojiyi gösteren Perseverance görüntüsü: sol, kamera, imageId, `imageIdVerified`, `rawUrl`, `sources`, `image`, `credit`) var. Eski biçim okunmaya devam eder. Diğer bölümler değişmedi.
+
+> **v3.1: Section 7 MEDA schema v2.** `meda.json` yeni şemaya geçti: `version: 2`, `site`, `source.datasets`, `historical: true`; her sol birden çok observation içerir ve her dolu değerin kaynağı (`measurements`: dosya, sütun, birim, belirsizlik, kalite) yazılır. Diğer bölümler değişmedi.
 
 > **v3 değişiklikleri (Kişi 2'nin önerisiyle):** `RouteResult.reason` içine `invalid-input` eklendi; geçersiz girdi artık `unreachable` dönmüyor (Bölüm 9). `meanSlopeDeg` mesafe ağırlıklı ortalama olarak tanımlandı (Bölüm 9). `pointOfNoReturnIndex` tanımlandı (Bölüm 9). Hiçbir alternatif rota bulunamazsa `recommended: null` (Bölüm 9). **v3 dondurulmuştur:** bundan sonra sadece bir şey gerçekten çalışmıyorsa, aşama sonunda değiştirilir.
 
@@ -157,53 +161,198 @@ GeoJSON `FeatureCollection`; koordinatlar **yerel metrik sistemde (Bölüm 1)**.
 { "unit": "Birim kodu", "name": "Birim adı", "description": "Kısa açıklama", "source": "USGS kaynak adı ve linki" }
 ```
 
-## 7. `meda.json`
+## 7. `meda.json` (şema v2)
+
+Perseverance MEDA ölçümlerinden seçilmiş soller. Dosya **isteğe bağlıdır**: yoksa veya bu şemaya uymuyorsa arayüz koşullar panelini hiç göstermez, uygulamanın geri kalanı aynen çalışır.
+
+**Temel ilke:** Her değer tek bir sensörün, tek bir LMST zamanındaki ölçümüdür. Farklı sensörlerin farklı zamanlardaki ölçümleri **ayrı observation** olarak tutulur, aynı satıra birleştirilmez (ör. 13:05'teki basınç ile 13:20'deki rüzgâr iki ayrı observation'dır).
+
+### Örnek
+
+> **Uyarı:** Aşağıdaki sayılar, tarihler, dosya ve sütun adları **yalnızca biçimi göstermek içindir; gerçek ölçüm değildir.** Gerçek değerleri Kişi 2, kaynak veri setinden alır ve `source` alanına veri setinin tam adını ve linkini/DOI'sini yazar.
 
 ```json
 {
-  "site": "Jezero Crater",
-  "source": "Perseverance MEDA – NASA PDS (tam ad ve link)",
+  "version": 2,
+  "site": { "name": "Jezero Crater", "approxLon": 77.5, "approxLat": 18.4 },
+  "source": {
+    "datasets": [
+      { "name": "Veri setinin tam adı (örnek)", "url": "https://example.org/dataset", "doi": null }
+    ]
+  },
+  "historical": true,
   "sols": [
     {
-      "sol": 0,
-      "earthDate": "YYYY-MM-DD",
-      "localTime": "13:00",
-      "airTempC": 0,
-      "pressurePa": 0,
-      "opacity": 0,
-      "label": "Açıklama",
-      "isSample": false
+      "sol": 100,
+      "observations": [
+        {
+          "localTime": "13:05",
+          "timeSystem": "LMST",
+          "earthDate": "2021-06-01",
+          "pressurePa": 700.0,
+          "relativeHumidityPct": null,
+          "sensorTempC": -20.0,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": { "file": "ORNEK_PS_DOSYASI.CSV", "column": "PRESSURE", "unit": "Pa", "uncertainty": 1.0, "quality": null },
+            "sensorTempC": { "file": "ORNEK_RHS_DOSYASI.CSV", "column": "SENSOR_TEMP", "unit": "°C", "uncertainty": null, "quality": "ornek-bayrak" }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "13:20",
+          "timeSystem": "LMST",
+          "earthDate": "2021-06-01",
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 5.0,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": { "file": "ORNEK_WS_DOSYASI.CSV", "column": "WIND_SPEED", "unit": "m/s", "uncertainty": 0.5, "quality": null }
+          },
+          "isSample": false
+        }
+      ]
     }
   ]
 }
 ```
 
-- `earthDate`: ölçümün yapıldığı Dünya tarihi. Her gerçek ölçümde zorunludur.
-- `isSample: true` ise değer gerçek ölçüm değil, açıkça etiketlenmiş örnek senaryodur (B planı).
+### Üst düzey alanlar
 
-**MEDA verisi geçmiş ölçümdür, güncel hava durumu değildir.** Arayüz kuralları (Kişi 1):
+| Alan | Tip | Birim | Null olabilir mi | Açıklama |
+| --- | --- | --- | --- | --- |
+| `version` | sayı | – | hayır | Her zaman `2`. Başka bir değer geçersiz dosya sayılır. |
+| `site.name` | string | – | hayır | Bölgenin adı, ör. "Jezero Crater". |
+| `site.approxLon` | sayı | ° doğu | hayır | Yaklaşık boylam, −180…180, doğu pozitif. Sadece bilgi amaçlı; haritada kullanılmaz. Hangi koordinat sistemine göre verildiği (planetocentric/planetographic) kaynakta doğrulanmalı. |
+| `site.approxLat` | sayı | ° kuzey | hayır | Yaklaşık enlem, −90…90. |
+| `source.datasets[]` | dizi | – | hayır (en az 1 eleman) | Kullanılan veri setleri. |
+| `source.datasets[].name` | string | – | hayır | Veri setinin tam adı. |
+| `source.datasets[].url` | string | – | evet | Veri setinin linki. `url` ve `doi`'den en az biri dolu olmalıdır. |
+| `source.datasets[].doi` | string | – | evet | DOI, ör. `10.xxxx/...`. |
+| `historical` | boolean | – | hayır | Her zaman `true`: veri geçmiş ölçümdür. |
+| `sols[]` | dizi | – | hayır (en az 1 eleman) | Seçilmiş soller. |
+| `sols[].sol` | tam sayı ≥ 0 | sol | hayır | Görev sol numarası. Aynı sol iki kez yer almaz. |
+| `sols[].observations[]` | dizi | – | hayır (en az 1 eleman) | O sol'deki ölçümler. |
 
-- Panel başlığı "Current weather" / "Live" gibi ifadeler kullanmaz. Örnek: **"Surface conditions – historical MEDA measurements"**.
-- Her değerin yanında kaynağı ve zamanı görünür: **"Perseverance MEDA · Sol 412 · 2022-04-27 · 13:00 LMST"**.
-- `isSample: true` olan değerler **"Sample scenario – not a measurement"** etiketiyle gösterilir.
-- "EVA için uygun / dikkat" etiketi, seçilen geçmiş sol için bir senaryo değerlendirmesi olarak sunulur, bugünkü koşullar için değil.
+### Observation alanları
+
+| Alan | Tip | Birim | Null olabilir mi | Açıklama |
+| --- | --- | --- | --- | --- |
+| `localTime` | string `"HH:MM"` | – | hayır | Ölçüm zamanı, 24 saat biçiminde yerel ortalama güneş saati. |
+| `timeSystem` | string | – | hayır | Her zaman `"LMST"` (Local Mean Solar Time). |
+| `earthDate` | string `"YYYY-MM-DD"` | – | evet | Ölçümün Dünya tarihi (UTC). Bilinmiyorsa `null`. |
+| `pressurePa` | sayı | Pa | evet | Atmosfer basıncı. |
+| `relativeHumidityPct` | sayı | % | evet | Bağıl nem, 0–100. |
+| `sensorTempC` | sayı | °C | evet | **Sensör sıcaklığı, hava sıcaklığı değildir** (ör. nem sensörünün kendi sıcaklığı). |
+| `airTempC` | sayı | °C | evet | Hava sıcaklığı. Sadece kaynak bunu açıkça hava sıcaklığı olarak veriyorsa doldurulur. |
+| `windSpeedMps` | sayı | m/s | evet | Rüzgâr hızı. |
+| `opacity` | sayı ≥ 0 | boyutsuz | evet | Atmosfer opaklığı. Hangi ürün/tanım olduğu `measurements.opacity.column` ve veri seti adıyla belirtilir. |
+| `measurements` | nesne | – | hayır | **Dolu (null olmayan) her değer alanı için** aynı adlı bir girdi zorunludur. Null alanlar için girdi yazılmaz (yazılırsa yok sayılır). |
+| `isSample` | boolean | – | hayır | `true`: değerler gerçek ölçüm değil, açıkça etiketlenmiş örnek senaryodur (B planı). |
+
+Bir observation'da en az bir değer alanı dolu olmalıdır.
+
+### `measurements.<alan>` girdisi
+
+| Alan | Tip | Birim | Null olabilir mi | Açıklama |
+| --- | --- | --- | --- | --- |
+| `file` | string | – | hayır | Değerin alındığı kaynak dosyanın adı. |
+| `column` | string | – | hayır | Dosyadaki sütun adı. |
+| `unit` | string | – | hayır | Bu JSON'daki değerin birimi; alanın birimiyle aynı olmalı: `"Pa"`, `"%"`, `"°C"`, `"m/s"`, opaklık için `"1"` (boyutsuz). Kaynakta başka birim varsa (ör. K) değer önce dönüştürülür. |
+| `uncertainty` | sayı ≥ 0 | alanın birimi | evet | Kaynağın verdiği belirsizlik (±). Yoksa `null`; uydurulmaz. |
+| `quality` | string | – | evet | Kaynaktaki kalite bayrağı, olduğu gibi. Yoksa `null`. |
+
+**Geçerlilik:** Yukarıdaki kurallardan biri bozulursa (yanlış `version`, eksik zorunlu alan, yanlış tip veya birim, dolu bir değerin `measurements` girdisinin olmaması) dosyanın tamamı geçersiz sayılır ve panel gösterilmez.
+
+### Arayüz kuralları (Kişi 1)
+
+**MEDA verisi geçmiş ölçümdür, güncel hava durumu değildir.**
+
+- Panel "Current weather", "Live", "Today" gibi ifadeler kullanmaz; **"HISTORICAL"** rozeti taşır.
+- Seçili ölçüm her zaman şu metinle sunulur: **"Historical MEDA data – Sol X, LMST hh:mm – not current conditions"**. `earthDate` doluysa yanında gösterilir.
+- Sadece null olmayan değerler gösterilir; null bir alan için satır, "–" veya "N/A" gösterilmez.
+- `sensorTempC` her zaman **"Sensor temperature (not air temperature)"** olarak etiketlenir.
+- Her değerin yanında birimi ve kaynak bilgisi (dosya/sütun, belirsizlik, kalite) görünür; kaynak `source.datasets[]` linkleriyle verilir.
+- `isSample: true` olan observation **"Sample"** rozetiyle ve "Sample scenario – not a measurement" notuyla gösterilir.
+- **EVA uygunluk hükmü:** `opacity` veya `airTempC` yokken "EVA için uygun / dikkat" hükmü verilmez. Mevcut arayüz hiçbir durumda bu verilerden EVA hükmü üretmez; ileride eklenirse yalnızca seçilen geçmiş sol için bir senaryo değerlendirmesi olarak sunulur, bugünkü koşullar için değil.
 
 ## 8. `stops.json` (Kişi 1)
 
+Bilimsel duraklar. Her durağın kartı iki bölümden oluşur:
+
+1. **At this location:** haritadaki o noktada ne olduğu (`atLocation`).
+2. **Reference field image:** Perseverance'ın **başka bir yerde** çektiği, benzer jeolojiyi gösteren referans görüntü (`reference`). Bu görüntü durağın harita konumunda çekilmemiştir; arayüz bunu her zaman açıkça etiketler.
+
+### Dosya biçimi
+
 ```json
-[
-  {
-    "id": "delta-edge",
-    "name": "Durak adı",
-    "col": 120,
-    "row": 85,
-    "description": "Astronot diliyle 2–3 cümle",
-    "whyImportant": "Bilimsel önemi",
-    "sourceUrl": "https://...",
-    "photo": { "file": "photos/xxx.jpg", "sol": 0, "camera": "Kamera adı", "imageId": "Görüntü kimliği", "url": "https://..." }
-  }
-]
+{
+  "gridSize": { "width": 400, "height": 400 },
+  "stops": [
+    {
+      "id": "stop-1",
+      "name": "Durak adı",
+      "col": 235,
+      "row": 265,
+      "atLocation": null,
+      "reference": {
+        "description": "Referans görüntüdeki jeolojinin açıklaması",
+        "whyItMatters": "Bilimsel önemi",
+        "sol": 530,
+        "camera": "Mastcam-Z Left",
+        "imageId": "Görüntü kimliği",
+        "imageIdVerified": true,
+        "rawUrl": "https://mars.nasa.gov/mars2020/multimedia/raw-images/<imageId>",
+        "sources": ["https://..."],
+        "image": "content/images/stop1_sol530.jpg",
+        "credit": null
+      }
+    }
+  ]
+}
 ```
+
+> Örnekteki değerler biçimi göstermek içindir. Gerçek içerik `frontend/public/content/stops.json` dosyasındadır; metinleri Kişi 3 verir.
+
+### Alanlar
+
+| Alan | Tip | Null olabilir mi | Açıklama |
+| --- | --- | --- | --- |
+| `gridSize.width`, `gridSize.height` | pozitif tam sayı | hayır | `col`/`row` değerlerinin ait olduğu ızgara boyutu. Haritadaki ızgara bu boyutta değilse duraklar gösterilmez (aynı sayılar başka bir yeri gösterirdi). |
+| `stops[]` | dizi | hayır | Duraklar. Geçersiz bir giriş atlanır, diğerleri çalışır. |
+| `id` | string | hayır | Benzersiz kimlik. |
+| `name` | string | hayır | Kartta ve harita etiketinde görünen ad. |
+| `col`, `row` | tam sayı | hayır | Izgara hücresi (Bölüm 1). Hücre geçilebilir olmalı; değilse durak gizlenir. |
+| `atLocation` | string | evet | Haritadaki noktada ne olduğu. `null` iken kartta "Location description pending" yazar. |
+| `reference` | nesne | evet | Referans saha görüntüsü. `null` ise kartın ikinci bölümü gösterilmez. |
+| `reference.description` | string | evet | Referans görüntüde görülen jeolojinin açıklaması. |
+| `reference.whyItMatters` | string | evet | Bilimsel önemi ("Why it matters"). |
+| `reference.sol` | sayı | evet | Görüntünün çekildiği sol. |
+| `reference.camera` | string | evet | Kamera adı, ör. "Mastcam-Z Left". |
+| `reference.imageId` | string | evet | NASA görüntü kimliği. |
+| `reference.imageIdVerified` | boolean | alan yazılmayabilir | `false`: kimlik ile link henüz uyuşmuyor; arayüz kimliği ve `rawUrl` linkini göstermez, yerine "Image ID pending verification" yazar. Alan yoksa `true` sayılır. |
+| `reference.rawUrl` | string (http/https) | evet | Görüntünün NASA Raw Images sayfası. |
+| `reference.sources` | string dizisi (http/https) | hayır (boş olabilir) | Bilimsel kaynak linkleri. http/https olmayan girdiler yok sayılır. |
+| `reference.image` | string | evet | Site köküne göre görüntü yolu, ör. `content/images/stop1_sol530.jpg` (`frontend/public/` altında). Sadece düz göreli yol kabul edilir (`..`, `/` ile başlayan veya `http` yollar reddedilir); uzantı jpg/jpeg/png/webp. Dosya yoksa veya yüklenemezse fotoğraf alanı gizlenir, kart çalışır. |
+| `reference.credit` | string | evet | Görüntü kredisi. `null` veya yoksa "NASA/JPL-Caltech/ASU" (Mastcam-Z) gösterilir; başka bir kameranın görüntüsünde doğru kredi buraya yazılır. |
+
+### Geriye dönük uyumluluk
+
+Eski biçim de okunmaya devam eder:
+
+- Dosya düz bir dizi ise (`gridSize` yok), hücreler 100×100 mock ızgarasına ait sayılır.
+- Eski alanlar `description` (string, artık zorunlu değil), `whyImportant`, `sourceUrl` ve `photo` (`file`, `sol`, `camera`, `imageId`, `url`; dosya `content/` altına göre) hâlâ okunur. `atLocation` yoksa `description` "At this location" metni olarak, `reference` yoksa `photo`/`whyImportant`/`sourceUrl` referans bölümü olarak gösterilir.
+
+### Arayüz kuralları (Kişi 1)
+
+- Referans bölümünün başlığının yanında her zaman şu etiket görünür: **"Not taken at this map location – comparable geology observed by Perseverance"**.
+- Sadece dolu alanlar gösterilir; `null` alanlar için satır gösterilmez.
+- Metinler dosyadaki gibi gösterilir; arayüz içerik eklemez veya değiştirmez.
 
 ---
 
