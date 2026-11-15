@@ -1,0 +1,1880 @@
+{
+  "version": 2,
+  "site": {
+    "name": "Jezero Crater",
+    "approxLon": 77.443,
+    "approxLat": 18.432
+  },
+  "source": {
+    "datasets": [
+      {
+        "name": "Mars 2020 MEDA Pressure Sensor Derived Data",
+        "url": "https://pdsatmospheres.nmsu.edu/data_and_services/atmospheres_data/PERSEVERANCE/meda_08192021.html",
+        "doi": null
+      },
+      {
+        "name": "Mars 2020 MEDA Relative Humidity Sensor Derived Data",
+        "url": "https://pdsatmospheres.nmsu.edu/data_and_services/atmospheres_data/PERSEVERANCE/meda_08192021.html",
+        "doi": null
+      },
+      {
+        "name": "Mars 2020 MEDA Wind Sensor Derived Data",
+        "url": "https://pdsatmospheres.nmsu.edu/data_and_services/atmospheres_data/PERSEVERANCE/meda_08192021.html",
+        "doi": null
+      }
+    ]
+  },
+  "historical": true,
+  "sols": [
+    {
+      "sol": 301,
+      "observations": [
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 635.65,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0301___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 6.3,
+          "sensorTempC": -65.05,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 1.06,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.21,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "00:02",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 0.96,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0301___________DER_WS__________________P01.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 631.73,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0301___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 13.5,
+          "sensorTempC": -70.02,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.22,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 0.82,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0301___________DER_WS__________________P01.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 633.53,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0301___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.02,
+          "sensorTempC": -27.65,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.13,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 2.56,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0301___________DER_WS__________________P01.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 621.38,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0301___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.0,
+          "sensorTempC": -17.66,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.11,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 4.37,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0301___________DER_WS__________________P01.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 609.13,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0301___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.0,
+          "sensorTempC": -13.91,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.1,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 8.87,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0301___________DER_WS__________________P01.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 629.38,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0301___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 1.98,
+          "sensorTempC": -53.08,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0301___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.18,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 5.89,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0301___________DER_WS__________________P01.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        }
+      ]
+    },
+    {
+      "sol": 310,
+      "observations": [
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 634.24,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0310___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 9.05,
+          "sensorTempC": -64.73,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.21,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 2.45,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0310___________DER_WS__________________P02.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 630.15,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0310___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 28.84,
+          "sensorTempC": -74.05,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 3.05,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.23,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:02",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 0.36,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0310___________DER_WS__________________P02.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 637.13,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0310___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.02,
+          "sensorTempC": -27.82,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.13,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 1.41,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0310___________DER_WS__________________P02.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 623.47,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0310___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.0,
+          "sensorTempC": -17.5,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.8,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.11,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:01",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 3.66,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0310___________DER_WS__________________P02.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 611.81,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0310___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.0,
+          "sensorTempC": -16.53,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.81,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.11,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:01",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 8.73,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0310___________DER_WS__________________P02.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 626.88,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0310___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 1.85,
+          "sensorTempC": -52.79,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0310___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.18,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": 6.3,
+          "opacity": null,
+          "measurements": {
+            "windSpeedMps": {
+              "file": "WE__0310___________DER_WS__________________P02.csv",
+              "column": "HORIZONTAL_WIND_SPEED",
+              "unit": "m/s",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        }
+      ]
+    },
+    {
+      "sol": 320,
+      "observations": [
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 635.22,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0320___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 10.0,
+          "sensorTempC": -68.59,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.22,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 633.9,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0320___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 21.82,
+          "sensorTempC": -75.31,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.24,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 642.9,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0320___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.11,
+          "sensorTempC": -34.74,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.14,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 628.72,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0320___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.0,
+          "sensorTempC": -16.11,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.11,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 617.39,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0320___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.0,
+          "sensorTempC": -15.44,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.11,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 632.18,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0320___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 1.78,
+          "sensorTempC": -53.96,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0320___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.18,
+              "quality": null
+            }
+          },
+          "isSample": false
+        }
+      ]
+    },
+    {
+      "sol": 420,
+      "observations": [
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 737.46,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0420___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 3.63,
+          "sensorTempC": -63.02,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.2,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 728.31,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0420___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 9.53,
+          "sensorTempC": -70.27,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.22,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 734.83,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0420___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.25,
+          "sensorTempC": -45.18,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.16,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 720.59,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0420___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.06,
+          "sensorTempC": -11.51,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.1,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 706.32,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0420___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.09,
+          "sensorTempC": -27.66,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.72,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.13,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 736.34,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0420___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 1.25,
+          "sensorTempC": -53.5,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0420___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.18,
+              "quality": null
+            }
+          },
+          "isSample": false
+        }
+      ]
+    },
+    {
+      "sol": 426,
+      "observations": [
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 758.0,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0426___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "00:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 5.22,
+          "sensorTempC": -67.7,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.97,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.22,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 744.5,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0426___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "04:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 8.62,
+          "sensorTempC": -74.75,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 1.92,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.23,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 742.67,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0426___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "08:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.79,
+          "sensorTempC": -56.92,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.73,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.19,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 732.77,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0426___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "12:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.08,
+          "sensorTempC": -7.68,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.93,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.1,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 714.05,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0426___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "16:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.07,
+          "sensorTempC": -21.02,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.77,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.11,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 742.13,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0426___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 1.35,
+          "sensorTempC": -55.25,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.75,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0426___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.19,
+              "quality": null
+            }
+          },
+          "isSample": false
+        }
+      ]
+    },
+    {
+      "sol": 431,
+      "observations": [
+        {
+          "localTime": "17:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 721.17,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0431___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "17:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 0.16,
+          "sensorTempC": -40.13,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0431___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": 0.68,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0431___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.15,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": 768.41,
+          "relativeHumidityPct": null,
+          "sensorTempC": null,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "pressurePa": {
+              "file": "WE__0431___________DER_PS__________________P01.csv",
+              "column": "PRESSURE",
+              "unit": "Pa",
+              "uncertainty": null,
+              "quality": null
+            }
+          },
+          "isSample": false
+        },
+        {
+          "localTime": "20:00",
+          "timeSystem": "LMST",
+          "earthDate": null,
+          "pressurePa": null,
+          "relativeHumidityPct": 1.3,
+          "sensorTempC": -55.67,
+          "airTempC": null,
+          "windSpeedMps": null,
+          "opacity": null,
+          "measurements": {
+            "relativeHumidityPct": {
+              "file": "WE__0431___________DER_RHS_________________P01.csv",
+              "column": "LOCAL_RELATIVE_HUMIDITY",
+              "unit": "%",
+              "uncertainty": null,
+              "quality": null
+            },
+            "sensorTempC": {
+              "file": "WE__0431___________DER_RHS_________________P01.csv",
+              "column": "HUMIDITY_LOCAL_TEMP",
+              "unit": "°C",
+              "uncertainty": 0.19,
+              "quality": null
+            }
+          },
+          "isSample": false
+        }
+      ]
+    }
+  ]
+}
