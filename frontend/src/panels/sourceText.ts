@@ -43,3 +43,15 @@ export function linkParts(text: string): TextPart[] {
     .filter(Boolean)
     .map((part) => (URL_PATTERN.test(part) ? { text: part, href: part } : { text: part }))
 }
+
+// "; scenario limit 25 degrees" inside the title's parentheses, or a whole
+// "(scenario limit 25°)" group. The limit is a slider now, so a fixed number
+// in the title would go stale; the slope legend shows the current limit.
+const LIMIT_IN_GROUP = /\s*[;,]\s*scenario limit\s+\d+(?:\.\d+)?\s*(?:degrees|deg|°)\s*(?=\))/i
+const LIMIT_GROUP = /\s*\(\s*scenario limit\s+\d+(?:\.\d+)?\s*(?:degrees|deg|°)\s*\)/i
+
+/** Layer title without its fixed "scenario limit N degrees" part; unchanged when that part is not found. */
+export function layerTitleWithoutLimit(title: string): string {
+  const stripped = title.replace(LIMIT_IN_GROUP, '').replace(LIMIT_GROUP, '').trim()
+  return stripped || title
+}

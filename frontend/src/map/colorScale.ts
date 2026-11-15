@@ -86,10 +86,16 @@ export function slopeCssGradient(maxSlopeDeg: number): string {
   return `linear-gradient(to right, ${parts.join(', ')})`
 }
 
-/** Legend tick values: 0, 5, 10 … up to the slope limit. */
+/**
+ * Legend tick values: 0, 5, 10 … up to the slope limit. A regular tick closer
+ * than 0.4 × step to the limit is dropped so the two labels do not overlap
+ * (the limit is a scenario slider, so e.g. 21° is possible).
+ */
 export function slopeLegendTicks(maxSlopeDeg: number, step = 5): number[] {
   const ticks: number[] = []
-  for (let v = 0; v < maxSlopeDeg; v += step) ticks.push(v)
+  for (let v = 0; v < maxSlopeDeg; v += step) {
+    if (v === 0 || maxSlopeDeg - v >= step * 0.4) ticks.push(v)
+  }
   ticks.push(maxSlopeDeg)
   return ticks
 }

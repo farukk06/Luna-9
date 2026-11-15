@@ -1,13 +1,13 @@
 import type { Cell, Grid } from '../routing/types'
-import type { AssessmentResult } from './routeAssess'
+import type { AssessParams, AssessmentResult } from './routeAssess'
 
 // Messages between useRouteAssessment and routeWorker. The grid is sent once
 // (copying 3 × 160 000 numbers per request would cost more than it saves);
-// each request then carries only the two cells and an id.
+// each request then carries only the two cells, the scenario parameters and an id.
 
 export type WorkerRequest =
   | { type: 'grid'; grid: Grid }
-  | { type: 'assess'; id: number; habitat: Cell; target: Cell }
+  | { type: 'assess'; id: number; habitat: Cell; target: Cell; params: AssessParams }
 
 export type WorkerResponse =
   | ({ type: 'result'; id: number } & AssessmentResult)

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Cell, Grid } from './routing/types'
 import MapView from './map/MapView'
 import { findNearestPassableCell, passabilityIssue } from './map/cells'
@@ -17,12 +17,19 @@ import {
   loadLayers,
   mockSpecFromSearch,
 } from './services/data'
-import { DEFAULT_EVA_PROFILE, DEFAULT_OPTIONS } from './services/routing'
+import { DEFAULT_OPTIONS } from './services/routing'
 import { useRouteAssessment } from './services/useRouteAssessment'
+import { useDebouncedValue } from './services/useDebouncedValue'
+import { renderSlope } from './map/rasterImages'
+import { DEFAULT_SCENARIO, type ScenarioParams } from './panels/scenarioParams'
 import { type Stop, loadStops, placeableStops, stopCell } from './services/stops'
 import StopCard from './panels/StopCard'
 
+// Default slope limit, used only to place the initial habitat/target and the
+// science stops. Routing, the slope layer and map clicks follow the scenario limit.
 const MAX_SLOPE_DEG = DEFAULT_OPTIONS.maxSlopeDeg
+// Slider changes wait this long before routes and the slope image are redone.
+const SCENARIO_DEBOUNCE_MS = 250
 const DEFAULT_SLOPE_LAYER: OverlayState = { visible: true, opacity: 0.5 }
 const DEFAULT_ROUGHNESS_LAYER: OverlayState = { visible: false, opacity: 0.6 }
 
@@ -34,6 +41,8 @@ interface LoadedData {
   sources: Record<LayerId, string>
   /** Only stops that sit on a passable cell of this grid. */
   stops: Stop[]
+  /** Habitat placed at startup; while it is unmoved, the demo habitat notes apply. */
+  initialHabitat: Cell | null
 }
 
 function SourceBadge({ source }: { source: DataSource }) {
@@ -100,8 +109,10 @@ function App() {
         roughness: layerSourceLabel('roughness', ctx),
       }
       const stops = placeableStops(allStops, grid, MAX_SLOPE_DEG, STOPS_GRID_SIZE)
-      setData({ grid, source, images: getLayerImageUrls(grid, source), layers: layersResult.layers, sources, stops })
-      setHabitat(initialHabitat(grid, source))
+      const startHabitat = initialHabitat(grid, source)
+      const images = getLayerImageUrls(grid, source)
+      setData({ grid, source, images, layers: layersResult.layers, sources, stops, initialHabitat: startHabitat })
+      setHabitat(startHabitat)
       setTarget(initialTarget(grid, source)) // ready-made demo mission
     })
     return () => {
@@ -109,13 +120,24 @@ function App() {
     }
   }, [])
 
-  const assessment = useRouteAssessment(data?.grid ?? null, habitat, target)
+  // `scenario` follows the sliders immediately (panel values); `activeScenario`
+  // lags by the debounce and drives routing, the slope layer and the legend.
+  const [scenario, setScenario] = useState<ScenarioParams>(DEFAULT_SCENARIO)
+  const activeScenario = useDebouncedValue(scenario, SCENARIO_DEBOUNCE_MS)
+  const slopeLimit = activeScenario.options.maxSlopeDeg
+  const grid = data?.grid ?? null
+  const slopeUrl = useMemo(() => (grid ? renderSlope(grid, slopeLimit) : ''), [grid, slopeLimit])
+
+  const assessment = useRouteAssessment(grid, habitat, target, activeScenario)
   const routingView: RoutingView = {
     computing: assessment.computing,
     alternatives: assessment.alternatives,
     eva: assessment.eva,
-    evaProfile: DEFAULT_EVA_PROFILE,
+    evaProfile: activeScenario.eva,
+    maxSlopeDeg: slopeLimit,
   }
+  const habitatPendingReview =
+    data !== null && MISSION_DEFAULTS[data.source].habitatPendingReview && sameCell(habitat, data.initialHabitat)
 
   const selectedStop = data?.stops.find((s) => s.id === selectedStopId) ?? null
 
@@ -152,7 +174,7 @@ function App() {
           <LayersPanel
             layers={data.layers}
             sources={data.sources}
-            maxSlopeDeg={MAX_SLOPE_DEG}
+            maxSlopeDeg={slopeLimit}
             slope={slopeLayer}
             onSlopeChange={setSlopeLayer}
             roughness={roughnessLayer}
@@ -175,7 +197,7 @@ function App() {
             grid={data.grid}
             orthoUrl={data.images.ortho}
             overlays={{
-              slope: { url: data.images.slope, ...slopeLayer },
+              slope: { url: slopeUrl, ...slopeLayer },
               roughness: { url: data.images.roughness, ...roughnessLayer },
             }}
             habitat={habitat}
@@ -187,7 +209,7 @@ function App() {
             stops={data.stops}
             stopsVisible={stopsVisible}
             onStopClick={setSelectedStopId}
-            maxSlopeDeg={MAX_SLOPE_DEG}
+            maxSlopeDeg={slopeLimit}
             onCellClick={handleCellClick}
             hint={clickMode === 'habitat' ? 'Click to place habitat' : undefined}
           />
@@ -214,6 +236,12 @@ function App() {
             onToggleMoveHabitat={() => setClickMode((m) => (m === 'habitat' ? 'target' : 'habitat'))}
             onClearTarget={() => setTarget(null)}
             onProfileHover={handleProfileHover}
+            scenario={scenario}
+            onScenarioChange={setScenario}
+            onScenarioReset={() => setScenario(DEFAULT_SCENARIO)}
+            stops={data.stops}
+            mockData={data.source === 'mock'}
+            habitatPendingReview={habitatPendingReview}
           />
         )}
       </aside>

@@ -26,6 +26,9 @@ describe('slope colour scale', () => {
   it('builds legend ticks every 5° up to the limit', () => {
     expect(slopeLegendTicks(25)).toEqual([0, 5, 10, 15, 20, 25])
     expect(slopeLegendTicks(22)).toEqual([0, 5, 10, 15, 20, 22])
+    expect(slopeLegendTicks(21)).toEqual([0, 5, 10, 15, 21])
+    expect(slopeLegendTicks(5)).toEqual([0, 5])
+    expect(slopeLegendTicks(6)).toEqual([0, 6])
   })
 
   it('produces a CSS gradient with the same stops as the image', () => {

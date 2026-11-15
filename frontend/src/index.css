@@ -656,3 +656,162 @@ label.layer-row input[type='checkbox'] {
   align-items: center;
   justify-content: center;
 }
+
+/* --- Scenario parameters (collapsible, closed by default) --- */
+.scenario-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scenario-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Our own disclosure arrow, so it sits beside the h3 instead of above it. */
+.scenario-summary::before {
+  content: '▸';
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.scenario-panel[open] > .scenario-summary::before {
+  content: '▾';
+}
+
+.scenario-summary h3 {
+  margin: 0;
+}
+
+.scenario-badge {
+  padding: 1px 6px;
+  border: 1px dashed var(--mock);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mock);
+}
+
+.scenario-help {
+  margin: 8px 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.param-group {
+  margin: 12px 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.param-slider {
+  display: grid;
+  grid-template-columns: 7.5em 1fr 4.2em;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+.param-slider input {
+  width: 100%;
+  min-width: 0;
+}
+
+.param-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.scenario-panel .btn {
+  margin-top: 10px;
+}
+
+/* --- Mission summary (briefing card) --- */
+.mission-summary {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--real);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 3%);
+}
+
+.mission-summary h3 {
+  margin-top: 0;
+}
+
+.mission-summary .stats {
+  font-size: 12px;
+}
+
+.text-danger {
+  color: #ff8a8d;
+}
+
+.briefing-block {
+  margin-top: 8px;
+}
+
+.briefing-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.briefing-list,
+.briefing-warnings {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.briefing-list li {
+  overflow-wrap: anywhere;
+}
+
+.briefing-warning {
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-left: 3px solid var(--border);
+  background: rgb(255 255 255 / 4%);
+}
+
+.briefing-warning--danger {
+  border-left-color: #e5484d;
+  background: rgb(229 72 77 / 12%);
+}
+
+.briefing-warning--caution {
+  border-left-color: var(--mock);
+  background: rgb(232 137 44 / 10%);
+}
+
+.briefing-warning--info {
+  border-left-color: #7fb6f0;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  background: #2c3036;
+}
+
+.route-failure p {
+  margin: 0;
+}
+
+.route-failure-detail {
+  margin-top: 4px !important;
+  font-size: 12px;
+  color: var(--text-muted);
+}

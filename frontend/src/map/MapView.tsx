@@ -61,7 +61,8 @@ function MapView(props: MapViewProps) {
   const { grid, orthoUrl, overlays, habitat, target, routes, routesStale, pointOfNoReturn, hoverCell } = props
   const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint } = props
   const { slope, roughness } = overlays
-  // Only the URLs rebuild the map; visibility/opacity are applied to the existing layers.
+  // Only the base/roughness URLs rebuild the map. The slope image changes with
+  // the scenario slope limit, so its source is swapped in place (view stays).
   const slopeUrl = slope.url
   const roughnessUrl = roughness.url
   const targetRef = useRef<HTMLDivElement>(null)
@@ -132,6 +133,14 @@ function MapView(props: MapViewProps) {
   }, [slope.visible, slope.opacity])
 
   useEffect(() => {
+    const layer = overlayLayersRef.current.slope
+    const source = layer?.getSource()
+    if (!layer || !source || source.getUrl() === slopeUrl) return
+    const projection = source.getProjection() ?? undefined
+    layer.setSource(new ImageStatic({ url: slopeUrl, projection, imageExtent: gridExtent(grid) }))
+  }, [grid, slopeUrl])
+
+  useEffect(() => {
     overlayLayersRef.current.roughness?.setVisible(roughness.visible)
     overlayLayersRef.current.roughness?.setOpacity(roughness.opacity)
   }, [roughness.visible, roughness.opacity])
@@ -147,7 +156,7 @@ function MapView(props: MapViewProps) {
     const overlayLayer = (id: OverlayId) => {
       const spec = overlaysRef.current[id]
       return new ImageLayer({
-        source: new ImageStatic({ url: id === 'slope' ? slopeUrl : roughnessUrl, projection, imageExtent: extent }),
+        source: new ImageStatic({ url: spec.url, projection, imageExtent: extent }),
         visible: spec.visible,
         opacity: spec.opacity,
       })
@@ -229,7 +238,9 @@ function MapView(props: MapViewProps) {
       stopsLayerRef.current = null
       routeLayerRef.current = null
     }
-  }, [grid, orthoUrl, slopeUrl, roughnessUrl, markerSource, routeSource, stopsSource, showNotice])
+    // slopeUrl is deliberately missing: overlaysRef holds the current URL for a new map,
+    // and the effect above swaps it on an existing one.
+  }, [grid, orthoUrl, roughnessUrl, markerSource, routeSource, stopsSource, showNotice])
 
   return (
     <div className="map-view">
