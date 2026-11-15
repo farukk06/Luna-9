@@ -8,6 +8,7 @@ import MissionSummary from './MissionSummary'
 import ScenarioPanel from './ScenarioPanel'
 import ConditionsPanel from './ConditionsPanel'
 import type { MedaFile } from '../services/meda'
+import type { HabitatRationale } from '../config/mission'
 import type { ScenarioParams } from './scenarioParams'
 import type { RouteKind } from '../config/routes'
 
@@ -37,7 +38,8 @@ interface MissionPanelProps {
   onScenarioReset: () => void
   stops: Stop[]
   mockData: boolean
-  habitatPendingReview: boolean
+  /** Shown as "Why here?" on the habitat card; null when the habitat was moved or none exists. */
+  habitatRationale: HabitatRationale | null
   /** Phone/touch layout: "Tap" instead of "Click" wording. */
   touch: boolean
   /** Route kept selected by a card click (null = the recommended route is shown). */
@@ -88,6 +90,13 @@ function MissionPanel(props: MissionPanelProps) {
             <h3>Habitat</h3>
           </div>
           {habitat ? <CellStats cell={habitat} grid={grid} /> : <p className="muted small">No passable cell found</p>}
+          {props.habitatRationale && (
+            <details className="why-here">
+              <summary>Why here?</summary>
+              <p className="why-here-text">{props.habitatRationale.text}</p>
+              <p className="why-here-note">{props.habitatRationale.note}</p>
+            </details>
+          )}
           <button
             type="button"
             className={`btn btn--small${placingHabitat ? ' btn--active' : ''}`}
@@ -125,7 +134,6 @@ function MissionPanel(props: MissionPanelProps) {
         blockedContext={blockedContext}
         stops={props.stops}
         mockData={props.mockData}
-        habitatPendingReview={props.habitatPendingReview}
       />
 
       {target && routing && (

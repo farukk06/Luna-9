@@ -16,7 +16,6 @@ interface MissionSummaryProps {
   maxSlopeLimitDeg: number
   stops: Stop[]
   mockData: boolean
-  habitatPendingReview: boolean
   blockedContext: BlockedContext
 }
 
@@ -47,7 +46,6 @@ function Briefing(props: MissionSummaryProps & { alternatives: Alternatives }) {
     eva,
     maxSlopeLimitDeg: props.maxSlopeLimitDeg,
     mockData: props.mockData,
-    habitatPendingReview: props.habitatPendingReview,
   })
   const shown = eva ? evaDisplay(eva) : null
   return (

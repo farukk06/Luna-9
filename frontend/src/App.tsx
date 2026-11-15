@@ -4,7 +4,7 @@ import MapView from './map/MapView'
 import { findNearestPassableCell, passabilityIssue } from './map/cells'
 import MissionPanel, { type ClickMode, type RoutingView } from './panels/MissionPanel'
 import LayersPanel, { type OverlayState } from './panels/LayersPanel'
-import { MISSION_DEFAULTS, STOPS_GRID_SIZE } from './config/mission'
+import { LEGACY_STOPS_GRID_SIZE, MISSION_DEFAULTS } from './config/mission'
 import { describePosition, gridCenterCell, positionToCell } from './map/positions'
 import {
   type DataSource,
@@ -44,7 +44,7 @@ interface LoadedData {
   sources: Record<LayerId, string>
   /** Only stops that sit on a passable cell of this grid. */
   stops: Stop[]
-  /** Habitat placed at startup; while it is unmoved, the demo habitat notes apply. */
+  /** Habitat placed at startup; while it is unmoved, its "Why here?" rationale is shown. */
   initialHabitat: Cell | null
 }
 
@@ -116,7 +116,7 @@ function App() {
   useEffect(() => {
     let cancelled = false // ignore the result if the component unmounted meanwhile
     const forcedMock = mockSpecFromSearch(window.location.search) // "?mock=400" for performance tests
-    Promise.all([loadGrid(forcedMock), loadLayers(), loadStops()]).then(([gridResult, layersResult, allStops]) => {
+    Promise.all([loadGrid(forcedMock), loadLayers(), loadStops()]).then(([gridResult, layersResult, stopsFile]) => {
       if (cancelled) return
       const { grid, source, sourceInfo } = gridResult
       const ctx = { gridSource: source, gridSourceInfo: sourceInfo, layersSource: layersResult.source, layers: layersResult.layers }
@@ -125,7 +125,9 @@ function App() {
         slope: layerSourceLabel('slope', ctx),
         roughness: layerSourceLabel('roughness', ctx),
       }
-      const stops = placeableStops(allStops, grid, MAX_SLOPE_DEG, STOPS_GRID_SIZE)
+      // The file names the grid its cells refer to; older files without it used the mock grid.
+      const stopsGrid = stopsFile.gridSize ?? LEGACY_STOPS_GRID_SIZE
+      const stops = placeableStops(stopsFile.stops, grid, MAX_SLOPE_DEG, stopsGrid)
       const startHabitat = initialHabitat(grid, source)
       const images = getLayerImageUrls(grid, source)
       setData({ grid, source, images, layers: layersResult.layers, sources, stops, initialHabitat: startHabitat })
@@ -166,8 +168,9 @@ function App() {
     evaProfile: activeScenario.eva,
     maxSlopeDeg: slopeLimit,
   }
-  const habitatPendingReview =
-    data !== null && MISSION_DEFAULTS[data.source].habitatPendingReview && sameCell(habitat, data.initialHabitat)
+  // "Why here?" explains the chosen site only: hidden once the habitat is moved elsewhere.
+  const habitatRationale =
+    data !== null && sameCell(habitat, data.initialHabitat) ? MISSION_DEFAULTS[data.source].habitatRationale : null
 
   const selectedStop = data?.stops.find((s) => s.id === selectedStopId) ?? null
 
@@ -303,7 +306,7 @@ function App() {
             onScenarioReset={() => setScenario(DEFAULT_SCENARIO)}
             stops={data.stops}
             mockData={data.source === 'mock'}
-            habitatPendingReview={habitatPendingReview}
+            habitatRationale={habitatRationale}
             touch={touch}
             selectedRoute={selectedRoute}
             focusedRoute={focusedRoute}

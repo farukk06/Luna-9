@@ -1,32 +1,67 @@
-[
-  {
-    "id": "stop-a",
-    "name": "Science stop A – content pending",
-    "col": 20,
-    "row": 20,
-    "description": "Placeholder. Scientific content will be provided by the team.",
-    "whyImportant": null,
-    "sourceUrl": null,
-    "photo": null
+{
+  "gridSize": {
+    "width": 400,
+    "height": 400
   },
-  {
-    "id": "stop-b",
-    "name": "Science stop B – content pending",
-    "col": 78,
-    "row": 25,
-    "description": "Placeholder. Scientific content will be provided by the team.",
-    "whyImportant": null,
-    "sourceUrl": null,
-    "photo": null
-  },
-  {
-    "id": "stop-c",
-    "name": "Science stop C – content pending",
-    "col": 82,
-    "row": 78,
-    "description": "Placeholder. Scientific content will be provided by the team.",
-    "whyImportant": null,
-    "sourceUrl": null,
-    "photo": null
-  }
-]
+  "stops": [
+    {
+      "id": "stop-1",
+      "name": "Fractured Crater-Floor Outcrop",
+      "col": 235,
+      "row": 265,
+      "atLocation": "Light-toned, polygonally fractured bedrock outcrop emerging along the eastern margin of the dark mafic crater-floor plain, surrounded by blocky regolith and small impact craters. Provides a stable, low-slope (5.0°) vantage point for inspecting exposed crater-floor stratigraphy.",
+      "reference": {
+        "description": "An eroded sedimentary remnant mound rising from the crater floor ahead of the main western delta escarpment, surrounded by wind-rippled sand bedforms. It exposes inclined foreset bedding layers deposited where an ancient river entered Lake Jezero, allowing astronauts to inspect deltaic stratigraphy from a safe standoff distance without climbing steep cliff slopes.",
+        "whyItMatters": "Preserves cross-sectional deltaic stratigraphy that records ancient lake-level fluctuations and fluvial sediment transport into Jezero Crater.",
+        "sol": 530,
+        "camera": "Mastcam-Z Left",
+        "imageId": "ZL0_0530_0713990263_223EBY_N0261222ZCAM08550_0340LMJ",
+        "rawUrl": "https://mars.nasa.gov/mars2020/multimedia/raw-images/ZL0_0530_0713990263_223EBY_N0261222ZCAM08550_0340LMJ",
+        "sources": [
+          "https://trek.nasa.gov/mars/"
+        ],
+        "image": "content/images/stop1_sol530.jpg"
+      }
+    },
+    {
+      "id": "stop-2",
+      "name": "Crater-Floor Scarp & Rim Bench",
+      "col": 202,
+      "row": 202,
+      "atLocation": "Positioned on the rocky southern rim of a prominent NW–SE crater-floor scarp overlooking a dune-filled trough to the northeast. The scarp wall exposes bright-toned fractured rock layers while keeping astronauts safely above the loose sand bedforms below.",
+      "reference": {
+        "description": "Fine-grained, polygonally fractured sedimentary bedrock on the lower delta apron where oxidized surface dust has been abraded away to expose fresh interior rock texture. This unit represents water-altered mudstone and sandstone beds mapped across the delta front with orbital aqueous mineral signatures.",
+        "whyItMatters": "Clay and carbonate minerals formed through past water–rock interaction are prime indicators of ancient habitable environments and past liquid water activity.",
+        "sol": 507,
+        "camera": "Mastcam-Z Right",
+        "imageId": "ZR0_0507_0711941426_456EBY_N0261222ZCAM08527_1100LMJ",
+        "imageIdVerified": true,
+        "rawUrl": "https://mars.nasa.gov/mars2020/multimedia/raw-images/ZR0_0507_0711941426_456EBY_N0261222ZCAM08527_1100LMJ",
+        "sources": [
+          "https://trek.nasa.gov/mars/"
+        ],
+        "image": "content/images/stop2_sol507.jpg"
+      }
+    },
+    {
+      "id": "stop-3",
+      "name": "Mafic Plateau Rim Bench",
+      "col": 135,
+      "row": 175,
+      "atLocation": "A flat, consolidated dark mafic rock bench along the western scarp edge, positioned safely south of the adjacent aeolian sand dune field and bordering bright fractured bedrock exposures. Offers firm, low-slope footing for close-up rock inspection and sample-preparation simulations.",
+      "reference": {
+        "description": "A flat, competent sedimentary bench along the western delta front exhibiting a circular surface abrasion patch cleared through the weathered outer rind. This surface preparation workflow allows close-up mineralogical inspection prior to subsurface sample extraction.",
+        "whyItMatters": "Removing the radiation-oxidized surface rind exposes pristine interior mineralogy needed to evaluate organic preservation potential and prioritize subsurface biosignature sampling.",
+        "sol": 497,
+        "camera": "Mastcam-Z Right",
+        "imageId": "ZR0_0497_0711064436_394EBY_N0261004ZCAM08520_1100LMJ",
+        "rawUrl": "https://mars.nasa.gov/mars2020/multimedia/raw-images/ZR0_0497_0711064436_394EBY_N0261004ZCAM08520_1100LMJ",
+        "sources": [
+          "https://doi.org/10.3133/sim3292",
+          "https://science.nasa.gov/mission/mars-2020-perseverance/"
+        ],
+        "image": "content/images/stop3_sol497.jpg"
+      }
+    }
+  ]
+}

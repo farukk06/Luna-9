@@ -1,4 +1,6 @@
-# CONTRACT.md — MarsPath veri ve arayüz sözleşmesi (v3.1)
+# CONTRACT.md — MarsPath veri ve arayüz sözleşmesi (v3.2)
+
+> **v3.2: Section 8 stops reference image.** `stops.json` artık `{ gridSize, stops }` nesnesi; her durakta `atLocation` (haritadaki noktada ne var) ve `reference` (başka yerde çekilmiş, benzer jeolojiyi gösteren Perseverance görüntüsü: sol, kamera, imageId, `imageIdVerified`, `rawUrl`, `sources`, `image`, `credit`) var. Eski biçim okunmaya devam eder. Diğer bölümler değişmedi.
 
 > **v3.1: Section 7 MEDA schema v2.** `meda.json` yeni şemaya geçti: `version: 2`, `site`, `source.datasets`, `historical: true`; her sol birden çok observation içerir ve her dolu değerin kaynağı (`measurements`: dosya, sütun, birim, belirsizlik, kalite) yazılır. Diğer bölümler değişmedi.
 
@@ -281,20 +283,76 @@ Bir observation'da en az bir değer alanı dolu olmalıdır.
 
 ## 8. `stops.json` (Kişi 1)
 
+Bilimsel duraklar. Her durağın kartı iki bölümden oluşur:
+
+1. **At this location:** haritadaki o noktada ne olduğu (`atLocation`).
+2. **Reference field image:** Perseverance'ın **başka bir yerde** çektiği, benzer jeolojiyi gösteren referans görüntü (`reference`). Bu görüntü durağın harita konumunda çekilmemiştir; arayüz bunu her zaman açıkça etiketler.
+
+### Dosya biçimi
+
 ```json
-[
-  {
-    "id": "delta-edge",
-    "name": "Durak adı",
-    "col": 120,
-    "row": 85,
-    "description": "Astronot diliyle 2–3 cümle",
-    "whyImportant": "Bilimsel önemi",
-    "sourceUrl": "https://...",
-    "photo": { "file": "photos/xxx.jpg", "sol": 0, "camera": "Kamera adı", "imageId": "Görüntü kimliği", "url": "https://..." }
-  }
-]
+{
+  "gridSize": { "width": 400, "height": 400 },
+  "stops": [
+    {
+      "id": "stop-1",
+      "name": "Durak adı",
+      "col": 235,
+      "row": 265,
+      "atLocation": null,
+      "reference": {
+        "description": "Referans görüntüdeki jeolojinin açıklaması",
+        "whyItMatters": "Bilimsel önemi",
+        "sol": 530,
+        "camera": "Mastcam-Z Left",
+        "imageId": "Görüntü kimliği",
+        "imageIdVerified": true,
+        "rawUrl": "https://mars.nasa.gov/mars2020/multimedia/raw-images/<imageId>",
+        "sources": ["https://..."],
+        "image": "content/images/stop1_sol530.jpg",
+        "credit": null
+      }
+    }
+  ]
+}
 ```
+
+> Örnekteki değerler biçimi göstermek içindir. Gerçek içerik `frontend/public/content/stops.json` dosyasındadır; metinleri Kişi 3 verir.
+
+### Alanlar
+
+| Alan | Tip | Null olabilir mi | Açıklama |
+| --- | --- | --- | --- |
+| `gridSize.width`, `gridSize.height` | pozitif tam sayı | hayır | `col`/`row` değerlerinin ait olduğu ızgara boyutu. Haritadaki ızgara bu boyutta değilse duraklar gösterilmez (aynı sayılar başka bir yeri gösterirdi). |
+| `stops[]` | dizi | hayır | Duraklar. Geçersiz bir giriş atlanır, diğerleri çalışır. |
+| `id` | string | hayır | Benzersiz kimlik. |
+| `name` | string | hayır | Kartta ve harita etiketinde görünen ad. |
+| `col`, `row` | tam sayı | hayır | Izgara hücresi (Bölüm 1). Hücre geçilebilir olmalı; değilse durak gizlenir. |
+| `atLocation` | string | evet | Haritadaki noktada ne olduğu. `null` iken kartta "Location description pending" yazar. |
+| `reference` | nesne | evet | Referans saha görüntüsü. `null` ise kartın ikinci bölümü gösterilmez. |
+| `reference.description` | string | evet | Referans görüntüde görülen jeolojinin açıklaması. |
+| `reference.whyItMatters` | string | evet | Bilimsel önemi ("Why it matters"). |
+| `reference.sol` | sayı | evet | Görüntünün çekildiği sol. |
+| `reference.camera` | string | evet | Kamera adı, ör. "Mastcam-Z Left". |
+| `reference.imageId` | string | evet | NASA görüntü kimliği. |
+| `reference.imageIdVerified` | boolean | alan yazılmayabilir | `false`: kimlik ile link henüz uyuşmuyor; arayüz kimliği ve `rawUrl` linkini göstermez, yerine "Image ID pending verification" yazar. Alan yoksa `true` sayılır. |
+| `reference.rawUrl` | string (http/https) | evet | Görüntünün NASA Raw Images sayfası. |
+| `reference.sources` | string dizisi (http/https) | hayır (boş olabilir) | Bilimsel kaynak linkleri. http/https olmayan girdiler yok sayılır. |
+| `reference.image` | string | evet | Site köküne göre görüntü yolu, ör. `content/images/stop1_sol530.jpg` (`frontend/public/` altında). Sadece düz göreli yol kabul edilir (`..`, `/` ile başlayan veya `http` yollar reddedilir); uzantı jpg/jpeg/png/webp. Dosya yoksa veya yüklenemezse fotoğraf alanı gizlenir, kart çalışır. |
+| `reference.credit` | string | evet | Görüntü kredisi. `null` veya yoksa "NASA/JPL-Caltech/ASU" (Mastcam-Z) gösterilir; başka bir kameranın görüntüsünde doğru kredi buraya yazılır. |
+
+### Geriye dönük uyumluluk
+
+Eski biçim de okunmaya devam eder:
+
+- Dosya düz bir dizi ise (`gridSize` yok), hücreler 100×100 mock ızgarasına ait sayılır.
+- Eski alanlar `description` (string, artık zorunlu değil), `whyImportant`, `sourceUrl` ve `photo` (`file`, `sol`, `camera`, `imageId`, `url`; dosya `content/` altına göre) hâlâ okunur. `atLocation` yoksa `description` "At this location" metni olarak, `reference` yoksa `photo`/`whyImportant`/`sourceUrl` referans bölümü olarak gösterilir.
+
+### Arayüz kuralları (Kişi 1)
+
+- Referans bölümünün başlığının yanında her zaman şu etiket görünür: **"Not taken at this map location – comparable geology observed by Perseverance"**.
+- Sadece dolu alanlar gösterilir; `null` alanlar için satır gösterilmez.
+- Metinler dosyadaki gibi gösterilir; arayüz içerik eklemez veya değiştirmez.
 
 ---
 

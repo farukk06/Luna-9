@@ -19,7 +19,7 @@ function flatGrid(size = 40, cellSize = 5): Grid {
 }
 
 function stop(id: string, col: number, row: number): Stop {
-  return { id, name: id, col, row, description: '', whyImportant: null, sourceUrl: null, photo: null }
+  return { id, name: id, col, row, atLocation: null, reference: null, description: null, whyImportant: null, sourceUrl: null, photo: null }
 }
 
 function eva(partial: Partial<EvaCheck>): EvaCheck {
@@ -90,7 +90,7 @@ describe('stopsNearRoute', () => {
 })
 
 describe('missionWarnings', () => {
-  const base = { route: route(10), eva: eva({}), maxSlopeLimitDeg: 25, mockData: false, habitatPendingReview: false }
+  const base = { route: route(10), eva: eva({}), maxSlopeLimitDeg: 25, mockData: false }
 
   it('has no warnings for a comfortable real-data route', () => {
     expect(missionWarnings(base)).toEqual([])
@@ -107,15 +107,15 @@ describe('missionWarnings', () => {
     expect(missionWarnings({ ...base, route: route(21.9) })).toEqual([])
   })
 
-  it('flags mock data and the demo habitat, most serious first', () => {
+  it('flags mock data, most serious first', () => {
     const w = missionWarnings({
       ...base,
       route: route(24),
       eva: eva({ withinLimit: false }),
       mockData: true,
-      habitatPendingReview: true,
     })
-    expect(w.map((x) => x.id)).toEqual(['eva-limit', 'slope-near-limit', 'mock-data', 'habitat-review'])
-    expect(w[3].text).toBe('Demo habitat – pending science review.')
+    expect(w.map((x) => x.id)).toEqual(['eva-limit', 'slope-near-limit', 'mock-data'])
+    // The habitat site is confirmed: the old "pending science review" note is gone.
+    expect(w.some((x) => /pending science review/i.test(x.text))).toBe(false)
   })
 })

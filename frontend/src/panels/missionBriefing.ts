@@ -83,7 +83,7 @@ export function stopsNearRoute(stops: Stop[], path: Cell[], grid: Grid, maxDista
 export type WarningLevel = 'danger' | 'caution' | 'info'
 
 export interface MissionWarning {
-  id: 'point-of-no-return' | 'eva-limit' | 'slope-near-limit' | 'mock-data' | 'habitat-review'
+  id: 'point-of-no-return' | 'eva-limit' | 'slope-near-limit' | 'mock-data'
   level: WarningLevel
   text: string
 }
@@ -93,7 +93,6 @@ export interface WarningInput {
   eva: EvaCheck | null
   maxSlopeLimitDeg: number
   mockData: boolean
-  habitatPendingReview: boolean
 }
 
 function evaWarning(eva: EvaCheck | null): MissionWarning | null {
@@ -124,9 +123,6 @@ export function missionWarnings(input: WarningInput): MissionWarning[] {
     slopeWarning(input.route, input.maxSlopeLimitDeg),
     input.mockData
       ? { id: 'mock-data', level: 'caution', text: 'MOCK DATA: synthetic terrain, not real Mars measurements.' }
-      : null,
-    input.habitatPendingReview
-      ? { id: 'habitat-review', level: 'info', text: 'Demo habitat – pending science review.' }
       : null,
   ]
   return warnings.filter((w): w is MissionWarning => w !== null)
