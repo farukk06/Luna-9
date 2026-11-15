@@ -26,6 +26,7 @@ import { DEFAULT_SCENARIO, type ScenarioParams } from './panels/scenarioParams'
 import { type Stop, loadStops, placeableStops, stopCell } from './services/stops'
 import StopCard from './panels/StopCard'
 import type { RouteKind } from './config/routes'
+import { type MedaFile, loadMeda } from './services/meda'
 
 // Default slope limit, used only to place the initial habitat/target and the
 // science stops. Routing, the slope layer and map clicks follow the scenario limit.
@@ -94,6 +95,8 @@ function sameCell(a: Cell | null, b: Cell | null): boolean {
 
 function App() {
   const [data, setData] = useState<LoadedData | null>(null)
+  // Optional and independent: a missing or invalid meda.json never blocks the map.
+  const [meda, setMeda] = useState<MedaFile | null>(null)
   const [habitat, setHabitat] = useState<Cell | null>(null)
   const [target, setTarget] = useState<Cell | null>(null)
   const [clickMode, setClickMode] = useState<ClickMode>('target')
@@ -128,6 +131,16 @@ function App() {
       setData({ grid, source, images, layers: layersResult.layers, sources, stops, initialHabitat: startHabitat })
       setHabitat(startHabitat)
       setTarget(initialTarget(grid, source)) // ready-made demo mission
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    loadMeda().then((file) => {
+      if (!cancelled) setMeda(file)
     })
     return () => {
       cancelled = true
@@ -296,6 +309,7 @@ function App() {
             focusedRoute={focusedRoute}
             onSelectRoute={toggleRouteSelection}
             onHoverRoute={setHoveredRoute}
+            meda={meda}
           />
         )}
       </aside>

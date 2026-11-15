@@ -367,7 +367,8 @@ a {
 }
 
 .scenario-panel,
-.profile-section {
+.profile-section,
+.conditions-section {
   padding-top: var(--s3);
   border-top: 1px solid var(--border);
 }
@@ -792,6 +793,110 @@ a {
   height: 8px;
   margin-top: 3px;
   border-radius: 50%;
+}
+
+/* --- Surface conditions (historical MEDA) -------------------------------- */
+.badge--historical {
+  color: var(--text);
+  background: var(--surface-3);
+}
+
+.conditions-pickers {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s2);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.conditions-pickers select {
+  min-width: 0;
+  width: 100%;
+  padding: var(--s1) 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-3);
+  color: var(--text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.conditions-label {
+  margin: var(--s3) 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--border-strong);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.conditions-meta {
+  margin: var(--s1) 0 0;
+  padding-left: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.conditions-sample {
+  margin: var(--s2) 0 0;
+  padding: var(--s1) var(--s2);
+  border-left: 2px solid var(--warn);
+  background: rgb(245 176 65 / 10%);
+  font-size: 12px;
+}
+
+.readings {
+  display: grid;
+  gap: var(--s2);
+  margin: var(--s3) 0 0;
+}
+
+.reading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--s3);
+  padding: var(--s2) 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.reading dt {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.reading-value {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.reading-source {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 10px;
+  color: var(--text-faint);
+  overflow-wrap: anywhere; /* long source file names must not widen the panel */
+}
+
+.conditions-note {
+  margin: var(--s2) 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.conditions-sources {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.conditions-sources li {
+  overflow-wrap: anywhere;
 }
 
 /* --- Scenario parameters ------------------------------------------------- */
@@ -1394,8 +1499,9 @@ label.layer-row input[type='checkbox'] {
   .panel--right > .mission-summary { order: 1; }
   .panel--right > .routes-section { order: 2; }
   .panel--right > .profile-section { order: 3; }
-  .panel--right > .scenario-panel { order: 4; }
-  .panel--right > .waypoints-section { order: 5; }
+  .panel--right > .conditions-section { order: 4; }
+  .panel--right > .scenario-panel { order: 5; }
+  .panel--right > .waypoints-section { order: 6; }
 
   .panel-section {
     margin-bottom: var(--s4);
@@ -1501,5 +1607,9 @@ label.layer-row input[type='checkbox'] {
 
   .param-slider {
     grid-template-columns: minmax(0, 7em) minmax(0, 1fr) 4.4em;
+  }
+
+  .conditions-pickers select {
+    min-height: 40px;
   }
 }

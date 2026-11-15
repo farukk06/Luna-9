@@ -6,6 +6,8 @@ import RoutesSection from './RoutesSection'
 import ElevationProfile from './ElevationProfile'
 import MissionSummary from './MissionSummary'
 import ScenarioPanel from './ScenarioPanel'
+import ConditionsPanel from './ConditionsPanel'
+import type { MedaFile } from '../services/meda'
 import type { ScenarioParams } from './scenarioParams'
 import type { RouteKind } from '../config/routes'
 
@@ -44,6 +46,8 @@ interface MissionPanelProps {
   focusedRoute: RouteKind | null
   onSelectRoute: (kind: RouteKind) => void
   onHoverRoute: (kind: RouteKind | null) => void
+  /** Valid meda.json, or null: then the conditions panel is not rendered at all. */
+  meda: MedaFile | null
 }
 
 function CellStats({ cell, grid }: { cell: Cell; grid: Grid }) {
@@ -150,6 +154,8 @@ function MissionPanel(props: MissionPanelProps) {
           onHoverCell={props.onProfileHover}
         />
       </details>
+
+      {props.meda && <ConditionsPanel meda={props.meda} />}
 
       <ScenarioPanel params={props.scenario} onChange={props.onScenarioChange} onReset={props.onScenarioReset} />
     </>
