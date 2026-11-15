@@ -1293,6 +1293,26 @@ label.layer-row input[type='checkbox'] {
   clip-path: inherit;
 }
 
+.marker-sample--star {
+  width: 14px;
+  height: 14px;
+  margin: 0 4px;
+  background: #121418;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.marker-sample--star::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  background: #ffd34d;
+  clip-path: inherit;
+}
+
+.legend-row--wide {
+  grid-column: 1 / -1;
+}
+
 /* --- Map ------------------------------------------------------------------- */
 .map-area {
   grid-area: map;
@@ -1424,6 +1444,206 @@ label.layer-row input[type='checkbox'] {
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   white-space: nowrap;
+}
+
+/* --- Landing site card ----------------------------------------------------- */
+.landing-card {
+  position: relative;
+  width: 260px;
+  padding: 10px 30px 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: rgb(27 31 36 / 97%);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.landing-card-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: #ffd34d;
+}
+
+.landing-card-text {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.landing-card-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.landing-card-close:hover,
+.landing-card-close:focus-visible {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+/* --- "Where on Mars?" overview box ---------------------------------------- */
+/* Bottom-right above the pointer readout: the top-right holds the landing star. */
+.overview {
+  position: absolute;
+  right: var(--s3);
+  bottom: 48px;
+  z-index: 2;
+  width: 248px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: rgb(21 24 28 / 94%);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.overview--closed {
+  width: auto;
+  border: none;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.overview-toggle {
+  padding: 6px var(--s3);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgb(21 24 28 / 92%);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.overview-toggle:hover,
+.overview-toggle:focus-visible {
+  background: var(--surface-3);
+  color: var(--accent-text);
+}
+
+.overview-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  padding: 6px 6px 6px 10px;
+}
+
+.overview-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.overview-sub {
+  flex: 1;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.overview-close {
+  align-self: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.overview-close:hover,
+.overview-close:focus-visible {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.overview-map {
+  position: relative;
+  height: 180px;
+  background: #0a0b0d;
+}
+
+.overview-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* Nothing to draw the square on: hide the empty map, keep the message. */
+.overview-map--unavailable .overview-canvas {
+  visibility: hidden;
+}
+
+.overview-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.overview-map .ol-zoom {
+  top: 6px;
+  left: 6px;
+}
+
+.overview-map .ol-zoom button {
+  width: 24px;
+  height: 24px;
+  font-size: 15px;
+}
+
+.overview-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  padding: 6px 10px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.overview-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.overview-key-square {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--accent);
+}
+
+.overview-key-star {
+  width: 12px;
+  height: 12px;
+}
+
+.overview-credit {
+  margin: 0;
+  padding: 4px 10px 8px;
+  color: var(--text-faint);
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 /* --- Science stop card ----------------------------------------------------- */
@@ -1759,6 +1979,29 @@ label.layer-row input[type='checkbox'] {
 
   .map-notice {
     bottom: 96px;
+  }
+
+  /* Phones: bottom-right, since the readout takes the top edge and the scale line the bottom-left. */
+  .overview {
+    bottom: var(--s3);
+    width: min(248px, calc(100% - 24px));
+  }
+
+  .overview--closed {
+    width: auto;
+  }
+
+  .overview-toggle {
+    min-height: 40px;
+  }
+
+  .overview-close {
+    width: 40px;
+    height: 40px;
+  }
+
+  .overview-map {
+    height: 170px;
   }
 
   /* Top edge, right of the zoom buttons: the bottom-left corner holds the scale line. */

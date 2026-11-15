@@ -73,5 +73,6 @@ export const MARKER_COLORS = {
   target: '#f07b2f',
   pointOfNoReturn: '#ff3b47',
   scienceStop: '#f4f5f7',
+  landingSite: '#ffd34d',
   outline: '#121418',
 } as const

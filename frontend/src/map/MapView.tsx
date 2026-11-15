@@ -19,7 +19,9 @@ import { createRouteLayer, updateRoutes, type RouteLayerHandle, type RouteLine }
 import { createStopsLayer, updateStops } from './stopsLayer'
 import { logWhenDrawn, recordMapClick } from './clickTiming'
 import { clearLabelCache } from './mapSymbols'
-import { cellToMap } from './coords'
+import { cellToMap, type MapPoint } from './coords'
+import { createLandingLayer, updateLanding } from './landingLayer'
+import { LANDING_INFO, LANDING_LABEL } from '../config/landingSite'
 import type { Stop } from '../services/stops'
 import type VectorLayer from 'ol/layer/Vector'
 import type { RouteKind } from '../config/routes'
@@ -61,6 +63,8 @@ interface MapViewProps {
   focusedRoute: RouteKind | null
   /** Card shown next to this stop on the map (desktop); null = no card on the map. */
   popup: { stop: Stop; content: ReactNode } | null
+  /** Perseverance landing site in map metres; null when the grid has no lon/lat bounds. */
+  landingPoint: MapPoint | null
 }
 
 const NOTICE_MS = 2500
@@ -87,7 +91,7 @@ function popupPlacement(pixel: number[] | null, size: number[] | undefined): { p
 
 function MapView(props: MapViewProps) {
   const { grid, orthoUrl, overlays, habitat, target, routes, routesStale, pointOfNoReturn, hoverCell } = props
-  const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint, touch = false, focusedRoute, popup } = props
+  const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint, touch = false, focusedRoute, popup, landingPoint } = props
   const { slope, roughness } = overlays
   // Only the base/roughness URLs rebuild the map. The slope image changes with
   // the scenario slope limit, so its source is swapped in place (view stays).
@@ -107,6 +111,11 @@ function MapView(props: MapViewProps) {
   const [markerSource] = useState(() => new VectorSource())
   const [routeSource] = useState(() => new VectorSource())
   const [stopsSource] = useState(() => new VectorSource())
+  const [landingSource] = useState(() => new VectorSource())
+  // Short info card next to the landing star, opened by clicking it.
+  const [landingElement] = useState(() => document.createElement('div'))
+  const landingOverlayRef = useRef<Overlay | null>(null)
+  const [landingOpen, setLandingOpen] = useState(false)
   const stopsLayerRef = useRef<VectorLayer | null>(null)
   const routeLayerRef = useRef<RouteLayerHandle | null>(null)
   // The stop card is rendered by React (portal) into this element, which an OpenLayers Overlay keeps next to the stop.
@@ -174,6 +183,10 @@ function MapView(props: MapViewProps) {
     stopsLayerRef.current?.setVisible(stopsVisible)
   }, [stopsVisible])
 
+  useEffect(() => {
+    updateLanding(landingSource, landingPoint)
+  }, [landingSource, landingPoint])
+
   // Visibility/opacity changes only touch the layer: view (zoom, pan) and markers stay as they are.
   useEffect(() => {
     overlayLayersRef.current.slope?.setVisible(slope.visible)
@@ -219,14 +232,16 @@ function MapView(props: MapViewProps) {
     routeLayer.setFocus(focusedRouteRef.current)
     routeLayerRef.current = routeLayer
     const markerLayer = createMarkerLayer(markerSource)
+    const landingLayer = createLandingLayer(landingSource)
     const map = new Map({
       target: targetRef.current,
-      // Draw order, bottom to top: base image → slope → roughness → routes → stops → markers.
+      // Draw order, bottom to top: base image → slope → roughness → routes → landing site → stops → markers.
       layers: [
         ortho,
         slopeLayer,
         roughnessLayer,
         routeLayer.layer,
+        landingLayer,
         stopsLayer,
         markerLayer,
       ],
@@ -247,6 +262,15 @@ function MapView(props: MapViewProps) {
     })
     map.addOverlay(popupOverlay)
     popupOverlayRef.current = popupOverlay
+    const landingOverlay = new Overlay({
+      element: landingElement,
+      positioning: 'top-center',
+      offset: [0, 16],
+      autoPan: { margin: 16, animation: { duration: 200 } },
+      stopEvent: true,
+    })
+    map.addOverlay(landingOverlay)
+    landingOverlayRef.current = landingOverlay
 
     // Canvas labels drawn before Inter finished loading used the fallback font.
     let disposed = false
@@ -255,6 +279,7 @@ function MapView(props: MapViewProps) {
       clearLabelCache()
       markerLayer.changed()
       stopsLayer.changed()
+      landingLayer.changed()
     })
 
     // The readout is written straight to the DOM: pointermove fires many times
@@ -265,12 +290,15 @@ function MapView(props: MapViewProps) {
     }
     const element = targetRef.current
     const stopHitOptions = { layerFilter: (layer: unknown) => layer === stopsLayer, hitTolerance: STOP_HIT_TOLERANCE_PX }
+    const landingHitOptions = { layerFilter: (layer: unknown) => layer === landingLayer, hitTolerance: STOP_HIT_TOLERANCE_PX }
+    const isClickable = (pixel: number[]) =>
+      map.hasFeatureAtPixel(pixel, stopHitOptions) || map.hasFeatureAtPixel(pixel, landingHitOptions)
     map.on('pointermove', (event) => {
       if (event.dragging) return
       const [x, y] = event.coordinate
       setReadout(readoutText(x, y, grid))
       // Pointer cursor over a stop hints that it can be clicked.
-      element.style.cursor = map.hasFeatureAtPixel(event.pixel, stopHitOptions) ? 'pointer' : ''
+      element.style.cursor = isClickable(event.pixel) ? 'pointer' : ''
     })
     // A finger "leaves" right after every tap; keep the tapped cell readout then.
     const resetReadout = (event: PointerEvent) => {
@@ -283,9 +311,16 @@ function MapView(props: MapViewProps) {
       // A click on a stop opens its card instead of setting a target.
       const stopId = map.forEachFeatureAtPixel(event.pixel, (f) => f.get('stopId') as string | undefined, stopHitOptions)
       if (stopId) {
+        setLandingOpen(false)
         onStopClickRef.current(stopId)
         return
       }
+      // The landing star only explains itself; it never becomes a target.
+      if (map.hasFeatureAtPixel(event.pixel, landingHitOptions)) {
+        setLandingOpen(true)
+        return
+      }
+      setLandingOpen(false)
       const [x, y] = event.coordinate
       setReadout(readoutText(x, y, grid)) // touch has no hover, so a tap shows the cell too
       const cell = mapToCell(x, y, grid)
@@ -307,6 +342,8 @@ function MapView(props: MapViewProps) {
       element.removeEventListener('pointerleave', resetReadout)
       map.removeOverlay(popupOverlay)
       popupOverlayRef.current = null
+      map.removeOverlay(landingOverlay)
+      landingOverlayRef.current = null
       map.setTarget(undefined)
       map.dispose()
       mapRef.current = null
@@ -316,7 +353,7 @@ function MapView(props: MapViewProps) {
     }
     // slopeUrl is deliberately missing: overlaysRef holds the current URL for a new map,
     // and the effect above swaps it on an existing one.
-  }, [grid, orthoUrl, roughnessUrl, markerSource, routeSource, stopsSource, showNotice, popupElement])
+  }, [grid, orthoUrl, roughnessUrl, markerSource, routeSource, stopsSource, landingSource, showNotice, popupElement, landingElement])
 
   // Runs after the map effect above, so a rebuilt map gets the open card back.
   const popupStop = popup?.stop ?? null
@@ -335,6 +372,12 @@ function MapView(props: MapViewProps) {
     overlay.setPosition([x, y])
   }, [popupStop, grid, orthoUrl, roughnessUrl])
 
+  // Runs after the map effect too, so a rebuilt map keeps the card where it was.
+  const landingShown = landingOpen && landingPoint !== null
+  useEffect(() => {
+    landingOverlayRef.current?.setPosition(landingShown && landingPoint ? [landingPoint.x, landingPoint.y] : undefined)
+  }, [landingShown, landingPoint, grid, orthoUrl, roughnessUrl])
+
   return (
     <div className="map-view">
       <div ref={targetRef} className="map-canvas" />
@@ -347,6 +390,17 @@ function MapView(props: MapViewProps) {
       {/* Filled by the effects above, never by React children, so DOM writes cannot clash. */}
       <div ref={readoutRef} className="map-readout" />
       {popup && createPortal(popup.content, popupElement)}
+      {landingShown &&
+        createPortal(
+          <div className="landing-card" role="dialog" aria-label={LANDING_LABEL}>
+            <button type="button" className="landing-card-close" aria-label="Close" onClick={() => setLandingOpen(false)}>
+              ×
+            </button>
+            <p className="landing-card-title">{LANDING_LABEL}</p>
+            <p className="landing-card-text">{LANDING_INFO}</p>
+          </div>,
+          landingElement,
+        )}
     </div>
   )
 }
