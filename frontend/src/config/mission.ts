@@ -32,6 +32,11 @@ export interface MissionDefaults {
   habitat: MissionPosition | null
   /** null: the app opens without a target. */
   target: MissionPosition | null
+  /**
+   * True while the science team has not reviewed the demo habitat site yet;
+   * the mission summary then says so (only while the habitat is not moved).
+   */
+  habitatPendingReview: boolean
 }
 
 export const MISSION_DEFAULTS: Record<DataSource, MissionDefaults> = {
@@ -44,6 +49,7 @@ export const MISSION_DEFAULTS: Record<DataSource, MissionDefaults> = {
     // Not snapped: if it is not passable the app opens without a target.
     // (Cell 79, 13 on the 100×100 mock grid.)
     target: { kind: 'fraction', x: 0.795, y: 0.135 },
+    habitatPendingReview: false, // synthetic terrain: already flagged as MOCK DATA
   },
   real: {
     // Demo pair chosen by the team on the real grid; habitat pending science review by Person 3.
@@ -51,6 +57,7 @@ export const MISSION_DEFAULTS: Record<DataSource, MissionDefaults> = {
     // x = (col + 0.5) · 5, y = H − (row + 0.5) · 5.
     habitat: { kind: 'map', xM: 602.5, yM: 597.5 }, // cell (120, 280)
     target: { kind: 'map', xM: 1227.5, yM: 1672.5 }, // cell (245, 65)
+    habitatPendingReview: true,
   },
 }
 

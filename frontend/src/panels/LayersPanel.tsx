@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { LayerId, LayerInfo } from '../services/data'
 import { RoughnessLegend, RouteLegend, SlopeLegend } from './Legends'
 import SourceInfo from './SourceInfo'
+import { layerTitleWithoutLimit } from './sourceText'
 
 export interface OverlayState {
   visible: boolean
@@ -78,7 +79,8 @@ function LayersPanel(props: LayersPanelProps) {
         <SourceInfo text={sources.ortho} />
       </section>
 
-      <OverlayControl title={slopeInfo?.title ?? 'Slope'} state={props.slope} onChange={props.onSlopeChange} source={sources.slope}>
+      <OverlayControl
+        title={slopeInfo ? layerTitleWithoutLimit(slopeInfo.title) : 'Slope'} state={props.slope} onChange={props.onSlopeChange} source={sources.slope}>
         {/* The slope image is always drawn from the grid with this scale, so this legend always matches. */}
         <SlopeLegend maxSlopeDeg={maxSlopeDeg} />
       </OverlayControl>

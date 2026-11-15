@@ -24,7 +24,7 @@ export function SlopeLegend({ maxSlopeDeg }: { maxSlopeDeg: number }) {
       </div>
       <div className="legend-row">
         <span className="legend-swatch" style={{ background: IMPASSABLE_COLOR }} />
-        <span>&gt; {maxSlopeDeg}°: impassable (route slope limit)</span>
+        <span>&gt; {maxSlopeDeg}°: impassable (scenario slope limit)</span>
       </div>
       <p className="legend-note" title={`Fully transparent up to ${SLOPE_TRANSPARENT_MAX_DEG}°, fully shown from ${SLOPE_OPAQUE_FROM_DEG}°`}>
         Gentle slopes shown transparent

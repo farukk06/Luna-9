@@ -1,12 +1,14 @@
 import type { Alternatives, EvaCheck, EvaProfile, RouteResult } from '../routing/types'
 import { ROUTE_COLORS, ROUTE_LABELS, type RouteKind } from '../config/routes'
-import { evaDisplay, failureMessage, firstFailureMessage, orderedRouteKinds, recommendationSentence } from './routeAssessment'
+import { type BlockedContext, evaDisplay, failureMessage, orderedRouteKinds, recommendationSentence } from './routeAssessment'
+import RouteFailure from './RouteFailure'
 
 interface RoutesSectionProps {
   computing: boolean
   alternatives: Alternatives | null
   eva: EvaCheck | null
   evaProfile: EvaProfile
+  blockedContext: BlockedContext
 }
 
 const min = (v: number) => `${v.toFixed(1)} min`
@@ -71,10 +73,12 @@ function EvaSummary({ eva, profile }: { eva: EvaCheck; profile: EvaProfile }) {
   )
 }
 
-function RoutesBody({ alternatives, eva, evaProfile }: { alternatives: Alternatives; eva: EvaCheck | null; evaProfile: EvaProfile }) {
+type RoutesBodyProps = Omit<RoutesSectionProps, 'computing' | 'alternatives'> & { alternatives: Alternatives }
+
+function RoutesBody({ alternatives, eva, evaProfile, blockedContext }: RoutesBodyProps) {
   if (alternatives.recommended === null) {
     // CONTRACT: with no recommendation, show only the explanation, no routes.
-    return <p className="route-failure">{firstFailureMessage(alternatives)}</p>
+    return <RouteFailure alternatives={alternatives} context={blockedContext} />
   }
   return (
     <>
@@ -87,7 +91,7 @@ function RoutesBody({ alternatives, eva, evaProfile }: { alternatives: Alternati
   )
 }
 
-function RoutesSection({ computing, alternatives, eva, evaProfile }: RoutesSectionProps) {
+function RoutesSection({ computing, alternatives, eva, evaProfile, blockedContext }: RoutesSectionProps) {
   return (
     <section className="panel-section">
       <h3>Routes</h3>
@@ -95,7 +99,7 @@ function RoutesSection({ computing, alternatives, eva, evaProfile }: RoutesSecti
       {computing || !alternatives ? (
         <p className="muted">Computing routes…</p>
       ) : (
-        <RoutesBody alternatives={alternatives} eva={eva} evaProfile={evaProfile} />
+        <RoutesBody alternatives={alternatives} eva={eva} evaProfile={evaProfile} blockedContext={blockedContext} />
       )}
     </section>
   )

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { linkParts, shortSourceLabel, sourceSegments } from './sourceText'
+import { layerTitleWithoutLimit, linkParts, shortSourceLabel, sourceSegments } from './sourceText'
 
 // Same shape as the real layers.json / grid.json source strings.
 const ORTHO =
@@ -39,5 +39,21 @@ describe('details text', () => {
       { text: ' here' },
     ])
     expect(linkParts('javascript:alert(1)')).toEqual([{ text: 'javascript:alert(1)' }])
+  })
+})
+
+describe('layerTitleWithoutLimit', () => {
+  it('drops the fixed scenario limit from the real slope title', () => {
+    expect(layerTitleWithoutLimit('Slope (5 m DEM; scenario limit 25 degrees)')).toBe('Slope (5 m DEM)')
+  })
+
+  it('drops a parenthesised limit group and accepts the degree sign', () => {
+    expect(layerTitleWithoutLimit('Slope (scenario limit 22.5°)')).toBe('Slope')
+  })
+
+  it('keeps titles without that pattern unchanged', () => {
+    expect(layerTitleWithoutLimit('Slope')).toBe('Slope')
+    expect(layerTitleWithoutLimit('Slope (5 m DEM)')).toBe('Slope (5 m DEM)')
+    expect(layerTitleWithoutLimit('Slope; limit 25 degrees')).toBe('Slope; limit 25 degrees')
   })
 })

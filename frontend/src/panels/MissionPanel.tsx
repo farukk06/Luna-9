@@ -1,8 +1,12 @@
 import type { Alternatives, Cell, EvaCheck, EvaProfile, Grid } from '../routing/types'
 import { cellIndex } from '../map/coords'
 import { formatNumber } from '../map/format'
+import type { Stop } from '../services/stops'
 import RoutesSection from './RoutesSection'
 import ElevationProfile from './ElevationProfile'
+import MissionSummary from './MissionSummary'
+import ScenarioPanel from './ScenarioPanel'
+import type { ScenarioParams } from './scenarioParams'
 
 export type ClickMode = 'target' | 'habitat'
 
@@ -11,6 +15,8 @@ export interface RoutingView {
   alternatives: Alternatives | null
   eva: EvaCheck | null
   evaProfile: EvaProfile
+  /** Slope limit the shown routes were computed with. */
+  maxSlopeDeg: number
 }
 
 interface MissionPanelProps {
@@ -22,6 +28,13 @@ interface MissionPanelProps {
   onToggleMoveHabitat: () => void
   onClearTarget: () => void
   onProfileHover: (cell: Cell | null) => void
+  /** Live slider values (routes follow them after a short debounce). */
+  scenario: ScenarioParams
+  onScenarioChange: (next: ScenarioParams) => void
+  onScenarioReset: () => void
+  stops: Stop[]
+  mockData: boolean
+  habitatPendingReview: boolean
 }
 
 function CellStats({ cell, grid }: { cell: Cell; grid: Grid }) {
@@ -43,6 +56,13 @@ function CellStats({ cell, grid }: { cell: Cell; grid: Grid }) {
 function MissionPanel(props: MissionPanelProps) {
   const { grid, habitat, target, routing, clickMode } = props
   const placingHabitat = clickMode === 'habitat'
+  // Same inputs the shown routes were computed with, to explain a blocked habitat/target.
+  const blockedContext = {
+    grid,
+    habitat,
+    target,
+    maxSlopeDeg: routing?.maxSlopeDeg ?? props.scenario.options.maxSlopeDeg,
+  }
   return (
     <>
       <h2>Mission</h2>
@@ -74,12 +94,28 @@ function MissionPanel(props: MissionPanelProps) {
         )}
       </section>
 
+      <MissionSummary
+        grid={grid}
+        hasTarget={target !== null}
+        computing={routing?.computing ?? false}
+        alternatives={routing?.alternatives ?? null}
+        eva={routing?.eva ?? null}
+        maxSlopeLimitDeg={blockedContext.maxSlopeDeg}
+        blockedContext={blockedContext}
+        stops={props.stops}
+        mockData={props.mockData}
+        habitatPendingReview={props.habitatPendingReview}
+      />
+
+      <ScenarioPanel params={props.scenario} onChange={props.onScenarioChange} onReset={props.onScenarioReset} />
+
       {target && routing && (
         <RoutesSection
           computing={routing.computing}
           alternatives={routing.alternatives}
           eva={routing.eva}
           evaProfile={routing.evaProfile}
+          blockedContext={blockedContext}
         />
       )}
 
