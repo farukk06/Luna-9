@@ -21,6 +21,8 @@ interface LayersPanelProps {
   stopCount: number
   stopsVisible: boolean
   onStopsVisibleChange: (visible: boolean) => void
+  /** Phone layout: the whole panel folds into a closed-by-default disclosure. */
+  collapsible?: boolean
 }
 
 function findLayer(layers: LayerInfo[], id: LayerId): LayerInfo | undefined {
@@ -67,10 +69,8 @@ function LayersPanel(props: LayersPanelProps) {
   const slopeInfo = findLayer(layers, 'slope')
   const roughnessInfo = findLayer(layers, 'roughness')
 
-  return (
+  const body = (
     <>
-      <h2>Layers</h2>
-
       <section className="layer-item">
         <div className="layer-row">
           <span className="layer-title">{ortho?.title ?? 'Base image'}</span>
@@ -109,6 +109,23 @@ function LayersPanel(props: LayersPanelProps) {
 
       <h2 className="panel-subheading">Routes</h2>
       <RouteLegend />
+    </>
+  )
+
+  if (props.collapsible) {
+    return (
+      <details className="mobile-collapse">
+        <summary className="mobile-collapse-summary">
+          <h2>Layers &amp; legends</h2>
+        </summary>
+        {body}
+      </details>
+    )
+  }
+  return (
+    <>
+      <h2>Layers</h2>
+      {body}
     </>
   )
 }

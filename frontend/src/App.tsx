@@ -20,6 +20,7 @@ import {
 import { DEFAULT_OPTIONS } from './services/routing'
 import { useRouteAssessment } from './services/useRouteAssessment'
 import { useDebouncedValue } from './services/useDebouncedValue'
+import { COARSE_POINTER_QUERY, MOBILE_QUERY, useMediaQuery } from './services/useMediaQuery'
 import { renderSlope } from './map/rasterImages'
 import { DEFAULT_SCENARIO, type ScenarioParams } from './panels/scenarioParams'
 import { type Stop, loadStops, placeableStops, stopCell } from './services/stops'
@@ -122,6 +123,9 @@ function App() {
 
   // `scenario` follows the sliders immediately (panel values); `activeScenario`
   // lags by the debounce and drives routing, the slope layer and the legend.
+  const isMobile = useMediaQuery(MOBILE_QUERY)
+  const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY)
+  const touch = isMobile || coarsePointer
   const [scenario, setScenario] = useState<ScenarioParams>(DEFAULT_SCENARIO)
   const activeScenario = useDebouncedValue(scenario, SCENARIO_DEBOUNCE_MS)
   const slopeLimit = activeScenario.options.maxSlopeDeg
@@ -181,6 +185,7 @@ function App() {
             onRoughnessChange={setRoughnessLayer}
             stopCount={data.stops.length}
             stopsVisible={stopsVisible}
+            collapsible={isMobile}
             onStopsVisibleChange={(visible) => {
               setStopsVisible(visible)
               if (!visible) setSelectedStopId(null) // no card for a hidden stop
@@ -211,7 +216,8 @@ function App() {
             onStopClick={setSelectedStopId}
             maxSlopeDeg={slopeLimit}
             onCellClick={handleCellClick}
-            hint={clickMode === 'habitat' ? 'Click to place habitat' : undefined}
+            hint={clickMode === 'habitat' ? `${touch ? 'Tap' : 'Click'} to place habitat` : undefined}
+            touch={touch}
           />
         ) : (
           <p className="muted center">Loading terrain data…</p>
@@ -242,6 +248,7 @@ function App() {
             stops={data.stops}
             mockData={data.source === 'mock'}
             habitatPendingReview={habitatPendingReview}
+            touch={touch}
           />
         )}
       </aside>

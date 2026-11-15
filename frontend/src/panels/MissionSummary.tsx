@@ -58,8 +58,9 @@ function Briefing(props: MissionSummaryProps & { alternatives: Alternatives }) {
         <dd>{route.distanceM.toFixed(0)} m</dd>
         {shown && eva && (
           <>
-            <dt>Out + research + back</dt>
-            <dd>
+            {/* Longest row: on a phone it moves below its label (index.css .stats-stack). */}
+            <dt className="stats-stack">Out + research + back</dt>
+            <dd className="stats-stack">
               {shown.outbound} + {shown.research} + {shown.return} = {shown.total} min
             </dd>
             <dt>EVA limit</dt>

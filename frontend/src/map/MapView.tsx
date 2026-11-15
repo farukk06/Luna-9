@@ -11,7 +11,7 @@ import 'ol/ol.css'
 import type { Cell, Grid } from '../routing/types'
 import { passabilityIssue } from './cells'
 import { mapToCell } from './coords'
-import { READOUT_HINT, createLocalProjection, createView, gridExtent, readoutText } from './mapSetup'
+import { READOUT_HINT, TOUCH_READOUT_HINT, createLocalProjection, createView, gridExtent, readoutText } from './mapSetup'
 import { createMarkerLayer, updateMarkers } from './markers'
 import { createRouteLayer, updateRoutes, type RouteLine } from './routeLayer'
 import { createStopsLayer, updateStops } from './stopsLayer'
@@ -50,6 +50,8 @@ interface MapViewProps {
   onCellClick: (cell: Cell) => void
   /** Optional instruction shown on top of the map, e.g. while placing the habitat. */
   hint?: string
+  /** Phone/touch layout: tap wording in the readout box. */
+  touch?: boolean
 }
 
 const NOTICE_MS = 2500
@@ -59,7 +61,7 @@ const STOP_HIT_TOLERANCE_PX = 5
 
 function MapView(props: MapViewProps) {
   const { grid, orthoUrl, overlays, habitat, target, routes, routesStale, pointOfNoReturn, hoverCell } = props
-  const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint } = props
+  const { stops, stopsVisible, onStopClick, maxSlopeDeg, onCellClick, hint, touch = false } = props
   const { slope, roughness } = overlays
   // Only the base/roughness URLs rebuild the map. The slope image changes with
   // the scenario slope limit, so its source is swapped in place (view stays).
@@ -71,6 +73,10 @@ function MapView(props: MapViewProps) {
   // Initial overlay state for a freshly built map; later changes go through setVisible/setOpacity.
   const overlaysRef = useRef(overlays)
   const readoutRef = useRef<HTMLDivElement>(null)
+  const readoutHint = touch ? TOUCH_READOUT_HINT : READOUT_HINT
+  const readoutHintRef = useRef(readoutHint)
+  // True while the box shows the hint rather than a cell readout.
+  const showingHintRef = useRef(true)
   // Vector sources live as long as the component; route/marker changes only touch them.
   const [markerSource] = useState(() => new VectorSource())
   const [routeSource] = useState(() => new VectorSource())
@@ -94,7 +100,14 @@ function MapView(props: MapViewProps) {
     maxSlopeRef.current = maxSlopeDeg
     overlaysRef.current = overlays
     routesStaleRef.current = routesStale
+    readoutHintRef.current = readoutHint
   })
+
+  // The readout is plain DOM text (see setReadout below); swap the hint when
+  // the layout changes, e.g. a window resized across the phone breakpoint.
+  useEffect(() => {
+    if (readoutRef.current && showingHintRef.current) readoutRef.current.textContent = readoutHint
+  }, [readoutHint])
 
   const showNotice = useCallback((text: string) => {
     window.clearTimeout(noticeTimer.current)
@@ -191,7 +204,8 @@ function MapView(props: MapViewProps) {
 
     // The readout is written straight to the DOM: pointermove fires many times
     // per second and does not need to re-render the React tree.
-    const setReadout = (text: string) => {
+    const setReadout = (text: string, isHint = false) => {
+      showingHintRef.current = isHint
       if (readoutRef.current) readoutRef.current.textContent = text
     }
     const element = targetRef.current
@@ -203,7 +217,10 @@ function MapView(props: MapViewProps) {
       // Pointer cursor over a stop hints that it can be clicked.
       element.style.cursor = map.hasFeatureAtPixel(event.pixel, stopHitOptions) ? 'pointer' : ''
     })
-    const resetReadout = () => setReadout(READOUT_HINT)
+    // A finger "leaves" right after every tap; keep the tapped cell readout then.
+    const resetReadout = (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') setReadout(readoutHintRef.current, true)
+    }
     element.addEventListener('pointerleave', resetReadout)
 
     // 'click' fires immediately; 'singleclick' waits ~250 ms to rule out a double click.
@@ -215,6 +232,7 @@ function MapView(props: MapViewProps) {
         return
       }
       const [x, y] = event.coordinate
+      setReadout(readoutText(x, y, grid)) // touch has no hover, so a tap shows the cell too
       const cell = mapToCell(x, y, grid)
       if (!cell) return // outside the study area: ignore silently
       const issue = passabilityIssue(cell, grid, maxSlopeRef.current)
@@ -251,9 +269,8 @@ function MapView(props: MapViewProps) {
           {notice}
         </div>
       )}
-      <div ref={readoutRef} className="map-readout">
-        {READOUT_HINT}
-      </div>
+      {/* Filled by the effects above, never by React children, so DOM writes cannot clash. */}
+      <div ref={readoutRef} className="map-readout" />
     </div>
   )
 }
