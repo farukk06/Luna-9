@@ -10,6 +10,9 @@ import {
   historicalLabel,
   measurementDetail,
   measurementSource,
+  bestObservationIndex,
+  codeLegend,
+  defaultSelection,
   observationOption,
   siteText,
   sortedObservations,
@@ -28,8 +31,10 @@ interface ConditionsPanelProps {
  * an EVA suitability verdict.
  */
 function ConditionsPanel({ meda, defaultOpen = false }: ConditionsPanelProps) {
-  const [solIndex, setSolIndex] = useState(0)
-  const [obsIndex, setObsIndex] = useState(0)
+  // Opens on the observation with the most values (observations are per sensor, never merged).
+  const [initial] = useState(() => defaultSelection(meda))
+  const [solIndex, setSolIndex] = useState(initial.solIndex)
+  const [obsIndex, setObsIndex] = useState(initial.obsIndex)
   const solId = useId()
   const obsId = useId()
   const sol = meda.sols[solIndex] ?? meda.sols[0]
@@ -51,8 +56,10 @@ function ConditionsPanel({ meda, defaultOpen = false }: ConditionsPanelProps) {
           id={solId}
           value={solIndex}
           onChange={(e) => {
-            setSolIndex(Number(e.target.value))
-            setObsIndex(0) // a new sol starts at its earliest observation
+            const next = Number(e.target.value)
+            setSolIndex(next)
+            // Same rule as on opening: the richest observation of the new sol.
+            setObsIndex(bestObservationIndex(sortedObservations(meda.sols[next]?.observations ?? [])))
           }}
         >
           {meda.sols.map((s, i) => (
@@ -70,6 +77,8 @@ function ConditionsPanel({ meda, defaultOpen = false }: ConditionsPanelProps) {
           ))}
         </select>
       </div>
+      {/* Each MEDA sensor reports separately, so one time holds only some values. */}
+      <p className="conditions-codes">{codeLegend(observations)}</p>
 
       <p className="conditions-label">{historicalLabel(sol.sol, observation)}</p>
       <p className="conditions-meta">

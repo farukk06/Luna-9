@@ -1,4 +1,11 @@
-import { MEDA_VALUE_FIELDS, type MedaMeasurement, type MedaObservation, type MedaSite, type MedaValueField } from '../services/meda'
+import {
+  MEDA_VALUE_FIELDS,
+  type MedaFile,
+  type MedaMeasurement,
+  type MedaObservation,
+  type MedaSite,
+  type MedaValueField,
+} from '../services/meda'
 
 // Text for the conditions panel (CONTRACT Section 7 UI rules). MEDA values
 // are historical measurements: nothing here may read as current weather, and
@@ -83,8 +90,96 @@ export function sortedObservations(observations: MedaObservation[]): MedaObserva
   return [...observations].sort((a, b) => a.localTime.localeCompare(b.localTime))
 }
 
+/**
+ * Short codes for the time picker. Sensor temperature gets its own code (Ts)
+ * so it is never read as air temperature (T).
+ */
+export const FIELD_CODES: Record<MedaValueField, string> = {
+  pressurePa: 'P',
+  relativeHumidityPct: 'RH',
+  airTempC: 'T',
+  sensorTempC: 'Ts',
+  windSpeedMps: 'Wind',
+  opacity: 'Opacity',
+}
+
+const CODE_NAMES: Record<MedaValueField, string> = {
+  pressurePa: 'pressure',
+  relativeHumidityPct: 'relative humidity',
+  airTempC: 'air temperature',
+  sensorTempC: 'sensor temperature',
+  windSpeedMps: 'wind speed',
+  opacity: 'opacity',
+}
+
+const filledFields = (o: MedaObservation): MedaValueField[] => MEDA_VALUE_FIELDS.filter((f) => o[f] !== null)
+
+/** Number of non-null values in an observation. */
+export const filledCount = (o: MedaObservation): number => filledFields(o).length
+
+/** "LMST 13:00 · P, RH, Ts" (+ " · sample"). Observations stay separate; this only labels them. */
 export function observationOption(observation: MedaObservation): string {
-  return `LMST ${observation.localTime}${observation.isSample ? ' · sample' : ''}`
+  const codes = filledFields(observation).map((f) => FIELD_CODES[f]).join(', ')
+  return `LMST ${observation.localTime} · ${codes}${observation.isSample ? ' · sample' : ''}`
+}
+
+/** "P pressure · RH relative humidity · …" for the codes that appear in these observations. */
+export function codeLegend(observations: MedaObservation[]): string {
+  const used = MEDA_VALUE_FIELDS.filter((f) => observations.some((o) => o[f] !== null))
+  return used.map((f) => `${FIELD_CODES[f]} ${CODE_NAMES[f]}`).join(' · ')
+}
+
+// Daytime window used to break ties in the default selection (LMST, minutes).
+const DAY_START_MIN = 10 * 60
+const DAY_END_MIN = 16 * 60
+const DAY_MIN = 24 * 60
+
+const minutes = (localTime: string): number => {
+  const [h, m] = localTime.split(':').map(Number)
+  return h * 60 + m
+}
+
+const clockDistance = (a: number, b: number): number => {
+  const d = Math.abs(a - b)
+  return Math.min(d, DAY_MIN - d) // around midnight, 23:00 is close to 00:00
+}
+
+/** Minutes from LMST 10:00–16:00 (0 inside the window). */
+export function daytimeDistance(localTime: string): number {
+  const t = minutes(localTime)
+  if (t >= DAY_START_MIN && t <= DAY_END_MIN) return 0
+  return Math.min(clockDistance(t, DAY_START_MIN), clockDistance(t, DAY_END_MIN))
+}
+
+/** Negative when a is the better default: more values first, then closer to daytime. */
+function compareForDefault(a: MedaObservation, b: MedaObservation): number {
+  return filledCount(b) - filledCount(a) || daytimeDistance(a.localTime) - daytimeDistance(b.localTime)
+}
+
+/** Index of the default observation in an LMST-sorted list; full ties keep the earliest. */
+export function bestObservationIndex(observations: MedaObservation[]): number {
+  let best = 0
+  observations.forEach((o, i) => {
+    if (compareForDefault(o, observations[best]) < 0) best = i
+  })
+  return best
+}
+
+/**
+ * Opening selection: the sol whose best observation has the most values
+ * (ties: closer to daytime, then file order), and that observation.
+ */
+export function defaultSelection(meda: MedaFile): { solIndex: number; obsIndex: number } {
+  const picks = meda.sols.map((sol) => {
+    const sorted = sortedObservations(sol.observations)
+    const obsIndex = bestObservationIndex(sorted)
+    return { obsIndex, observation: sorted[obsIndex] }
+  })
+  let solIndex = 0
+  picks.forEach((pick, i) => {
+    if (compareForDefault(pick.observation, picks[solIndex].observation) < 0) solIndex = i
+  })
+  return { solIndex, obsIndex: picks[solIndex].obsIndex }
 }
 
 /** "Jezero Crater · ≈ 18.4° N, 77.5° E" */
