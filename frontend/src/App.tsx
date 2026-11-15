@@ -25,6 +25,7 @@ import { renderSlope } from './map/rasterImages'
 import { DEFAULT_SCENARIO, type ScenarioParams } from './panels/scenarioParams'
 import { type Stop, loadStops, placeableStops, stopCell } from './services/stops'
 import StopCard from './panels/StopCard'
+import type { RouteKind } from './config/routes'
 
 // Default slope limit, used only to place the initial habitat/target and the
 // science stops. Routing, the slope layer and map clicks follow the scenario limit.
@@ -47,7 +48,16 @@ interface LoadedData {
 }
 
 function SourceBadge({ source }: { source: DataSource }) {
-  return <span className={`source-badge source-badge--${source}`}>{source === 'real' ? 'REAL DATA' : 'MOCK DATA'}</span>
+  return (
+    <span className={`badge badge--${source}`} title={source === 'real' ? 'NASA/USGS data products' : 'Synthetic terrain for development'}>
+      {source === 'real' ? 'REAL DATA' : 'MOCK DATA'}
+    </span>
+  )
+}
+
+/** Identifies a habitat/target pair: a route selection only applies to the mission it was made for. */
+function missionKey(habitat: Cell | null, target: Cell | null): string {
+  return `${habitat?.col},${habitat?.row}>${target?.col},${target?.row}`
 }
 
 /** The configured demo target if it is usable on this grid; otherwise the app opens without one. */
@@ -92,6 +102,9 @@ function App() {
   const [stopsVisible, setStopsVisible] = useState(true)
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
   const [hoverCell, setHoverCell] = useState<Cell | null>(null)
+  // Route cards: hover previews a route on the map, a click keeps it selected.
+  const [hoveredRoute, setHoveredRoute] = useState<RouteKind | null>(null)
+  const [routeSelection, setRouteSelection] = useState<{ mission: string; kind: RouteKind } | null>(null)
   // Skip re-renders while the pointer stays on the same path cell.
   const handleProfileHover = useCallback((cell: Cell | null) => {
     setHoverCell((prev) => (sameCell(prev, cell) ? prev : cell))
@@ -145,6 +158,15 @@ function App() {
 
   const selectedStop = data?.stops.find((s) => s.id === selectedStopId) ?? null
 
+  // A selection or hover only counts while that route exists for the current mission.
+  const currentMission = missionKey(habitat, target)
+  const usableRoute = (kind: RouteKind | null | undefined): RouteKind | null =>
+    kind && assessment.alternatives?.recommended && assessment.alternatives[kind].ok ? kind : null
+  const selectedRoute = usableRoute(routeSelection?.mission === currentMission ? routeSelection.kind : null)
+  const focusedRoute = usableRoute(hoveredRoute) ?? selectedRoute
+  const toggleRouteSelection = (kind: RouteKind) =>
+    setRouteSelection(selectedRoute === kind ? null : { mission: currentMission, kind })
+
   const setStopAsTarget = (stop: Stop) => {
     setTarget(stopCell(stop)) // the route hook recomputes on the new target
     setClickMode('target')
@@ -167,6 +189,7 @@ function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
+          <span className="brand-mark" aria-hidden="true" />
           <span className="brand-title">MarsPath</span>
           <span className="brand-subtitle">Mars EVA route planner – Jezero Crater</span>
         </div>
@@ -186,6 +209,7 @@ function App() {
             stopCount={data.stops.length}
             stopsVisible={stopsVisible}
             collapsible={isMobile}
+            recommendedRoute={assessment.alternatives?.recommended ?? null}
             onStopsVisibleChange={(visible) => {
               setStopsVisible(visible)
               if (!visible) setSelectedStopId(null) // no card for a hidden stop
@@ -218,18 +242,37 @@ function App() {
             onCellClick={handleCellClick}
             hint={clickMode === 'habitat' ? `${touch ? 'Tap' : 'Click'} to place habitat` : undefined}
             touch={touch}
+            focusedRoute={focusedRoute}
+            popup={
+              selectedStop && !isMobile
+                ? {
+                    stop: selectedStop,
+                    content: (
+                      <StopCard
+                        stop={selectedStop}
+                        variant="popup"
+                        onSetTarget={() => setStopAsTarget(selectedStop)}
+                        onClose={() => setSelectedStopId(null)}
+                      />
+                    ),
+                  }
+                : null
+            }
           />
         ) : (
           <p className="muted center">Loading terrain data…</p>
         )}
-        {selectedStop && (
-          <StopCard
-            stop={selectedStop}
-            onSetTarget={() => setStopAsTarget(selectedStop)}
-            onClose={() => setSelectedStopId(null)}
-          />
-        )}
       </main>
+
+      {/* Phones: the stop card slides up from the bottom instead of covering the small map. */}
+      {selectedStop && isMobile && (
+        <StopCard
+          stop={selectedStop}
+          variant="sheet"
+          onSetTarget={() => setStopAsTarget(selectedStop)}
+          onClose={() => setSelectedStopId(null)}
+        />
+      )}
 
       <aside className="panel panel--right">
         {data && (
@@ -249,6 +292,10 @@ function App() {
             mockData={data.source === 'mock'}
             habitatPendingReview={habitatPendingReview}
             touch={touch}
+            selectedRoute={selectedRoute}
+            focusedRoute={focusedRoute}
+            onSelectRoute={toggleRouteSelection}
+            onHoverRoute={setHoveredRoute}
           />
         )}
       </aside>

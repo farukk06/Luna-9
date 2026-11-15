@@ -66,10 +66,10 @@ const weightText = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1
 function ScenarioPanel({ params, onChange, onReset }: ScenarioPanelProps) {
   const { options, eva } = params
   return (
-    <details className="panel-section scenario-panel">
-      <summary className="scenario-summary">
+    <details className="panel-section collapsible scenario-panel">
+      <summary className="collapsible-summary">
         <h3>Scenario parameters</h3>
-        <span className="scenario-badge" title="Planning assumptions, not measurements">
+        <span className="badge badge--scenario" title="Planning assumptions, not measurements">
           Scenario
         </span>
       </summary>
