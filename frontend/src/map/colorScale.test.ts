@@ -5,7 +5,9 @@ import {
   cssGradient,
   hexToRgb,
   normalizedRoughness,
+  slopeAlpha,
   slopeColor,
+  slopeCssGradient,
   slopeColorStops,
   slopeLegendTicks,
 } from './colorScale'
@@ -29,6 +31,22 @@ describe('slope colour scale', () => {
   it('produces a CSS gradient with the same stops as the image', () => {
     expect(cssGradient(slopeColorStops(25))).toBe(
       'linear-gradient(to right, #2b83ba 0.0%, #abdda4 40.0%, #fdae61 80.0%, #d7191c 100.0%)',
+    )
+  })
+
+  it('makes gentle slopes transparent and fades in up to 10°', () => {
+    expect(slopeAlpha(0, 25)).toBe(0)
+    expect(slopeAlpha(3, 25)).toBe(0)
+    expect(slopeAlpha(6.5, 25)).toBeCloseTo(0.5)
+    expect(slopeAlpha(10, 25)).toBe(1)
+    expect(slopeAlpha(20, 25)).toBe(1)
+    expect(slopeAlpha(30, 25)).toBe(1) // impassable is always shown
+  })
+
+  it('gives the legend the same colours and opacity ramp', () => {
+    expect(slopeCssGradient(25)).toBe(
+      'linear-gradient(to right, rgba(43, 131, 186, 0.00) 0.0%, rgba(81, 158, 179, 0.00) 12.0%, ' +
+        'rgba(171, 221, 164, 1.00) 40.0%, rgba(253, 174, 97, 1.00) 80.0%, rgba(215, 25, 28, 1.00) 100.0%)',
     )
   })
 

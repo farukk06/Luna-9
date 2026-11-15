@@ -189,13 +189,23 @@ body {
   flex-wrap: wrap;
 }
 
-label.layer-row {
-  cursor: pointer;
-}
-
 .layer-title {
   font-size: 14px;
   font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Checkbox rows: the checkbox stays beside the title even when a long title wraps. */
+label.layer-row {
+  cursor: pointer;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+label.layer-row input[type='checkbox'] {
+  flex: none;
+  margin: 2px 0 0;
 }
 
 .layer-tag {
@@ -227,6 +237,31 @@ label.layer-row {
   margin: 6px 0 0;
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.source-details summary {
+  cursor: pointer;
+  margin-top: 2px;
+  width: fit-content;
+}
+
+.source-details summary:hover {
+  color: var(--text);
+}
+
+.source-details ul {
+  margin: 4px 0 0;
+  padding-left: 14px;
+  line-height: 1.4;
+}
+
+.source-details li,
+.layer-source a {
+  overflow-wrap: anywhere; /* long file names and URLs must not widen the panel */
+}
+
+.layer-source a {
+  color: #7fb6f0;
 }
 
 .assessment-tag {
@@ -351,6 +386,12 @@ label.layer-row {
 .legend-bar {
   height: 10px;
   border-radius: 2px;
+}
+
+/* Outline so the transparent low end of the slope bar is still readable. */
+.legend-bar--outlined {
+  box-sizing: border-box;
+  border: 1px solid var(--border);
 }
 
 /* Tick labels positioned at their value along the bar. */

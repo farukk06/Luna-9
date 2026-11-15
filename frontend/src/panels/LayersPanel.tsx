@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { LayerId, LayerInfo } from '../services/data'
 import { RoughnessLegend, RouteLegend, SlopeLegend } from './Legends'
+import SourceInfo from './SourceInfo'
 
 export interface OverlayState {
   visible: boolean
@@ -54,7 +55,7 @@ function OverlayControl({ title, state, onChange, source, children }: OverlayCon
         <span className="layer-opacity-value">{opacityPct}%</span>
       </label>
       {children}
-      <p className="layer-source">Source: {source}</p>
+      <SourceInfo text={source} />
     </section>
   )
 }
@@ -74,7 +75,7 @@ function LayersPanel(props: LayersPanelProps) {
           <span className="layer-title">{ortho?.title ?? 'Base image'}</span>
           <span className="layer-tag">Base image · always on</span>
         </div>
-        <p className="layer-source">Source: {sources.ortho}</p>
+        <SourceInfo text={sources.ortho} />
       </section>
 
       <OverlayControl title={slopeInfo?.title ?? 'Slope'} state={props.slope} onChange={props.onSlopeChange} source={sources.slope}>

@@ -1,8 +1,10 @@
 import {
   IMPASSABLE_COLOR,
   ROUGHNESS_STOPS,
+  SLOPE_OPAQUE_FROM_DEG,
+  SLOPE_TRANSPARENT_MAX_DEG,
   cssGradient,
-  slopeColorStops,
+  slopeCssGradient,
   slopeLegendTicks,
 } from '../map/colorScale'
 import { MARKER_COLORS, ROUTE_COLORS, ROUTE_KINDS, ROUTE_LABELS } from '../config/routes'
@@ -12,7 +14,7 @@ export function SlopeLegend({ maxSlopeDeg }: { maxSlopeDeg: number }) {
   const ticks = slopeLegendTicks(maxSlopeDeg)
   return (
     <div className="legend">
-      <div className="legend-bar" style={{ background: cssGradient(slopeColorStops(maxSlopeDeg)) }} />
+      <div className="legend-bar legend-bar--outlined" style={{ background: slopeCssGradient(maxSlopeDeg) }} />
       <div className="legend-ticks">
         {ticks.map((t) => (
           <span key={t} style={{ left: `${(t / maxSlopeDeg) * 100}%` }}>
@@ -24,6 +26,9 @@ export function SlopeLegend({ maxSlopeDeg }: { maxSlopeDeg: number }) {
         <span className="legend-swatch" style={{ background: IMPASSABLE_COLOR }} />
         <span>&gt; {maxSlopeDeg}°: impassable (route slope limit)</span>
       </div>
+      <p className="legend-note" title={`Fully transparent up to ${SLOPE_TRANSPARENT_MAX_DEG}°, fully shown from ${SLOPE_OPAQUE_FROM_DEG}°`}>
+        Gentle slopes shown transparent
+      </p>
     </div>
   )
 }

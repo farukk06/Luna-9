@@ -32,8 +32,13 @@ describe('mission positions', () => {
     expect(positionToCell({ kind: 'map', xM: -1, yM: 5 }, small)).toBeNull()
   })
 
-  it('has no real-data defaults yet and a grid centre fallback', () => {
-    expect(MISSION_DEFAULTS.real).toEqual({ habitat: null, target: null })
+  it('puts the real-data demo pair on cells (120, 280) and (245, 65) of a 400×400, 5 m grid', () => {
+    // The large mock grid has the real grid's dimensions, which is all positionToCell uses.
+    expect(positionToCell(MISSION_DEFAULTS.real.habitat!, large)).toEqual({ col: 120, row: 280 })
+    expect(positionToCell(MISSION_DEFAULTS.real.target!, large)).toEqual({ col: 245, row: 65 })
+  })
+
+  it('falls back to the grid centre cell', () => {
     expect(gridCenterCell(large)).toEqual({ col: 200, row: 200 })
   })
 })
